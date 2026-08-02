@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0f766e">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>KinePed Beta</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="app-header">
+  <div>
+    <div class="eyebrow">Herramienta kinesica pediátrica</div>
+    <h1>KinePed <span>β</span></h1>
+  </div>
+  <button class="icon-btn" onclick="openModal('aboutModal')" aria-label="Información">?</button>
+</header>
+
+<main>
+  <section class="card patient-card">
+    <div class="section-title-row">
+      <div>
+        <h2>Paciente</h2>
+        <p>Ingresa una vez y reutiliza los datos.</p>
+      </div>
+    </div>
+    <div class="grid two">
+      <label>Edad <span class="unit">meses</span>
+        <input id="ageMonths" type="number" min="0" step="1" inputmode="numeric" placeholder="Ej. 4">
+      </label>
+      <label>Peso <span class="unit">kg</span>
+        <input id="weightKg" type="number" min="0.1" step="0.1" inputmode="decimal" placeholder="Ej. 7.5">
+      </label>
+    </div>
+  </section>
+
+  <nav class="tabs" aria-label="Módulos">
+    <button class="tab active" data-target="tal">Tal</button>
+    <button class="tab" data-target="wdf">Wood-Downes</button>
+    <button class="tab" data-target="cnaf">CNAF</button>
+    <button class="tab" data-target="vm">VM</button>
+  </nav>
+
+  <section id="tal" class="module active">
+    <div class="card">
+      <div class="section-title-row">
+        <div>
+          <h2>Tal modificado</h2>
+          <p>Bronquiolitis · 0–12 puntos</p>
+        </div>
+        <button class="help" onclick="openModal('talInfo')">?</button>
+      </div>
+
+      <label>Frecuencia respiratoria <span class="unit">rpm</span>
+        <input id="talFR" type="number" min="0" step="1" inputmode="numeric" placeholder="Ej. 58">
+      </label>
+
+      <label>Sibilancias / crepitaciones
+        <select id="talWheeze">
+          <option value="">Seleccionar</option>
+          <option value="0">Ninguna</option>
+          <option value="1">Sólo en espiración</option>
+          <option value="2">Espiración e inspiración con fonendoscopio</option>
+          <option value="3">Espiración e inspiración sin fonendoscopio</option>
+        </select>
+      </label>
+
+      <label>SpO₂ en aire ambiental <span class="unit">%</span>
+        <input id="talSpo2" type="number" min="0" max="100" step="1" inputmode="numeric" placeholder="Ej. 93">
+      </label>
+
+      <label>Musculatura accesoria
+        <select id="talMuscle">
+          <option value="">Seleccionar</option>
+          <option value="0">Ninguna</option>
+          <option value="1">Subcostal (+)</option>
+          <option value="2">Intercostal (++)</option>
+          <option value="3">Supraclavicular (+++)</option>
+        </select>
+      </label>
+
+      <button class="primary" onclick="calcTal()">Calcular Tal</button>
+      <div id="talResult" class="result empty">Completa los datos para calcular.</div>
+    </div>
+  </section>
+
+  <section id="wdf" class="module">
+    <div class="card">
+      <div class="section-title-row">
+        <div>
+          <h2>Wood-Downes-Ferrés</h2>
+          <p>Bronquiolitis · 0–14 puntos</p>
+        </div>
+        <button class="help" onclick="openModal('wdfInfo')">?</button>
+      </div>
+
+      <label>Sibilancias
+        <select id="wdfWheeze">
+          <option value="">Seleccionar</option>
+          <option value="0">No</option>
+          <option value="1">Final de espiración</option>
+          <option value="2">Toda la espiración</option>
+          <option value="3">Inspiración y espiración</option>
+        </select>
+      </label>
+
+      <label>Tiraje
+        <select id="wdfRetractions">
+          <option value="">Seleccionar</option>
+          <option value="0">No</option>
+          <option value="1">Subcostal + intercostal inferior</option>
+          <option value="2">Anterior + supraclavicular + aleteo nasal</option>
+          <option value="3">Anterior + supraesternal + intercostal superior</option>
+        </select>
+      </label>
+
+      <label>Entrada de aire
+        <select id="wdfAir">
+          <option value="">Seleccionar</option>
+          <option value="0">Buena, simétrica</option>
+          <option value="1">Regular, simétrica</option>
+          <option value="2">Muy disminuida</option>
+          <option value="3">Tórax silente</option>
+        </select>
+      </label>
+
+      <label>Cianosis
+        <select id="wdfCyanosis">
+          <option value="">Seleccionar</option>
+          <option value="0">No</option>
+          <option value="1">Sí</option>
+        </select>
+      </label>
+
+      <div class="grid two">
+        <label>FR <span class="unit">rpm</span>
+          <input id="wdfFR" type="number" min="0" step="1" inputmode="numeric" placeholder="Ej. 48">
+        </label>
+        <label>FC <span class="unit">lpm</span>
+          <input id="wdfHR" type="number" min="0" step="1" inputmode="numeric" placeholder="Ej. 135">
+        </label>
+      </div>
+
+      <button class="primary" onclick="calcWDF()">Calcular Wood-Downes</button>
+      <div id="wdfResult" class="result empty">Completa los datos para calcular.</div>
+    </div>
+  </section>
+
+  <section id="cnaf" class="module">
+    <div class="card">
+      <div class="section-title-row">
+        <div>
+          <h2>CNAF + AIRVO 2</h2>
+          <p>Flujo por peso + guía de interfaces Optiflow Junior 2/2+</p>
+        </div>
+        <button class="help" onclick="openModal('cnafInfo')">?</button>
+      </div>
+
+      <div class="protocol-box">
+        <strong>Algoritmo beta seleccionado</strong>
+        <span>≤10 kg: 2 L/kg/min · &gt;10 kg: 20 + 0,5 × (kg − 10)</span>
+      </div>
+
+      <button class="primary" onclick="calcCNAF()">Calcular desde el peso</button>
+      <div id="cnafResult" class="result empty">Ingresa el peso del paciente.</div>
+
+      <details class="reference-table">
+        <summary>Ver todas las cánulas Optiflow Junior</summary>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Tamaño</th><th>Código</th><th>Rango de flujo</th><th>AIRVO 2</th></tr></thead>
+            <tbody>
+              <tr><td>XS</td><td>OJR410</td><td>0,5–8 L/min</td><td>No compatible</td></tr>
+              <tr><td>S</td><td>OJR412</td><td>0,5–9 L/min</td><td>No compatible</td></tr>
+              <tr><td>M</td><td>OJR414</td><td>0,5–10 L/min</td><td>No compatible</td></tr>
+              <tr><td>L</td><td>OJR416</td><td>0,5–23 L/min</td><td>2–20 L/min</td></tr>
+              <tr><td>XL</td><td>OJR418</td><td>0,5–25 L/min</td><td>2–25 L/min</td></tr>
+              <tr><td>XXL</td><td>OJR520</td><td>1–36 L/min</td><td>10–50 L/min*</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="tiny">*Según la tabla aportada para Optiflow Junior 2/2+. Confirmar siempre compatibilidad del circuito/equipo disponible y ajuste anatómico.</p>
+      </details>
+    </div>
+  </section>
+
+
+  <section id="vm" class="module">
+    <div class="card">
+      <div class="section-title-row">
+        <div>
+          <h2>VM pediátrica</h2>
+          <p>Cálculos rápidos de volumen y mecánica</p>
+        </div>
+        <button class="help" onclick="openModal('vmInfo')">?</button>
+      </div>
+
+      <div class="protocol-box">
+        <strong>Calculadora, no protocolo</strong>
+        <span>Usa el peso ingresado en la ficha del paciente.</span>
+      </div>
+
+      <label>Frecuencia respiratoria programada <span class="unit">rpm · opcional</span>
+        <input id="vmRR" type="number" min="0" step="1" inputmode="numeric" placeholder="Ej. 24">
+      </label>
+
+      <div class="grid two">
+        <label>Pplat <span class="unit">cmH₂O · opcional</span>
+          <input id="vmPplat" type="number" step="0.1" inputmode="decimal" placeholder="Ej. 22">
+        </label>
+        <label>PEEP total <span class="unit">cmH₂O · opcional</span>
+          <input id="vmPeep" type="number" step="0.1" inputmode="decimal" placeholder="Ej. 6">
+        </label>
+      </div>
+
+      <button class="primary" onclick="calcVM()">Calcular VM</button>
+      <div id="vmResult" class="result empty">Ingresa el peso del paciente para calcular.</div>
+    </div>
+  </section>
+
+  <p class="disclaimer">Beta educativa y de apoyo al cálculo. No reemplaza evaluación clínica, protocolos locales ni indicación médica.</p>
+  <footer class="creator">Creado por <strong>Luis Rivas V</strong></footer>
+</main>
+
+<div id="talInfo" class="modal">
+  <div class="modal-card">
+    <button class="close" onclick="closeModal('talInfo')">×</button>
+    <h3>¿Qué mide el Tal modificado?</h3>
+    <p>Estima la gravedad clínica de la bronquiolitis mediante frecuencia respiratoria, hallazgos auscultatorios, oxigenación y uso de musculatura accesoria.</p>
+    <h4>¿Por qué pide edad?</h4>
+    <p>La frecuencia respiratoria se puntúa con rangos distintos en menores de 6 meses y mayores de 6 meses. La app selecciona automáticamente la tabla correspondiente.</p>
+    <h4>Interpretación</h4>
+    <p>≤5 leve · 6–8 moderado · ≥9 severo.</p>
+    <p class="source">Fuente beta: Recomendaciones chilenas de bronquiolitis viral 2024.</p>
+  </div>
+</div>
+
+<div id="wdfInfo" class="modal">
+  <div class="modal-card">
+    <button class="close" onclick="closeModal('wdfInfo')">×</button>
+    <h3>¿Qué mide Wood-Downes-Ferrés?</h3>
+    <p>Cuantifica la intensidad del compromiso respiratorio integrando obstrucción auscultatoria, retracciones, entrada de aire, frecuencia respiratoria, frecuencia cardíaca y cianosis.</p>
+    <h4>Interpretación</h4>
+    <p>1–3 leve · 4–7 moderado · 8–14 grave.</p>
+    <p class="source">La beta utiliza la tabla clásica Wood-Downes modificada por Ferrés.</p>
+  </div>
+</div>
+
+<div id="cnafInfo" class="modal">
+  <div class="modal-card">
+    <button class="close" onclick="closeModal('cnafInfo')">×</button>
+    <h3>¿Por qué calcular flujo por peso?</h3>
+    <p>La CNAF busca entregar flujo calentado y humidificado suficiente para acompañar la demanda inspiratoria, disminuir reinhalación de gas del espacio muerto nasofaríngeo y reducir trabajo respiratorio. La presión generada es variable: no equivale a una PEEP fija.</p>
+    <h4>Algoritmo de esta beta</h4>
+    <p>Hasta 10 kg se utilizan 2 L/kg/min. Sobre 10 kg se parte desde 20 L/min y se agregan 0,5 L/min por cada kg adicional. La referencia específica de este corte se añadirá cuando sea recuperada.</p>
+    <h4>Optiflow Junior 2/2+</h4>
+    <p>La familia incluye XS, S, M, L, XL y XXL. La tabla aportada muestra que <strong>XS, S y M no son compatibles con AIRVO 2</strong>. Para AIRVO 2 aparecen L, XL y XXL con sus respectivos rangos de flujo.</p>
+    <p><strong>Importante:</strong> compatibilidad por flujo no equivale a selección anatómica. Confirmar siempre ajuste de prongs y evitar oclusión completa de las narinas.</p>
+    <p class="source">Tabla de interfaces actualizada según material Fisher & Paykel aportado para esta beta.</p>
+  </div>
+</div>
+
+<div id="vmInfo" class="modal">
+  <div class="modal-card">
+    <button class="close" onclick="closeModal('vmInfo')">×</button>
+    <h3>¿Qué calcula este módulo?</h3>
+    <p>Entrega rápidamente volúmenes corrientes equivalentes a 6, 7 y 8 mL/kg usando el peso ingresado. Si agregas frecuencia respiratoria, calcula el volumen minuto teórico para cada VT.</p>
+    <h4>Driving pressure</h4>
+    <p>Si ingresas Pplat y PEEP total, calcula ΔP = Pplat − PEEP. Representa la presión necesaria para distender el sistema respiratorio por sobre la PEEP y debe interpretarse junto con VT, compliance, patología y mecánica del paciente.</p>
+    <h4>Uso clínico</h4>
+    <p>Este módulo es una calculadora de apoyo. No propone por sí solo un VT, una FR ni límites ventilatorios para un paciente concreto.</p>
+  </div>
+</div>
+
+<div id="aboutModal" class="modal">
+  <div class="modal-card">
+    <button class="close" onclick="closeModal('aboutModal')">×</button>
+    <h3>KinePed Beta</h3>
+    <p>Prototipo de apoyo clínico para uso kinesico pediátrico. Diseñado para cálculos rápidos y repaso del razonamiento detrás de cada herramienta.</p>
+    <p>No almacena datos de pacientes ni requiere conexión para los cálculos una vez instalada.</p>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+{
+  "name": "KinePed Beta",
+  "short_name": "KinePed",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f3f7f6",
+  "theme_color": "#0f766e",
+  "description": "Herramientas de apoyo kinesico pediátrico: Tal, Wood-Downes-Ferrés, CNAF/AIRVO y VM pediátrica."
+}
