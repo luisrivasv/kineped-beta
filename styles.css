@@ -89,3 +89,34 @@ th{background:#f5faf9;color:#38504e}
 .subsection-title{display:flex;justify-content:space-between;gap:10px;align-items:center}.subsection-title span{font-size:11px;color:var(--muted)}
 .secondary{width:100%;border:1px solid var(--brand);border-radius:14px;padding:13px;margin-top:10px;background:#fff;color:var(--brand);font-size:14px;font-weight:800}
 @media(max-width:420px){.metric-grid{grid-template-columns:1fr 1fr}}
+
+/* v0.4.2: Años + Meses + Peso siempre en una sola línea */
+.patient-input-grid{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:8px;
+  align-items:end;
+}
+.patient-input-grid label{
+  min-width:0;
+  font-size:12px;
+}
+.patient-input-grid input{
+  width:100%;
+  min-width:0;
+  padding-left:9px;
+  padding-right:9px;
+}
+@media(max-width:480px){
+  .patient-input-grid{
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:6px;
+  }
+  .patient-input-grid label{
+    font-size:11px;
+  }
+  .patient-input-grid input{
+    font-size:14px;
+    padding:10px 7px;
+  }
+}

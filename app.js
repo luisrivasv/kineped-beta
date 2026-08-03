@@ -23,7 +23,27 @@ function severityClass(s){
 }
 function val(id){ return $(id).value; }
 function num(id){ return Number($(id).value); }
-\nfunction totalAgeMonths(){\n  const yRaw = val('ageYears');\n  const mRaw = val('ageExtraMonths');\n  if(yRaw==='' && mRaw==='') return null;\n  const years = yRaw==='' ? 0 : Number(yRaw);\n  const months = mRaw==='' ? 0 : Number(mRaw);\n  if(!Number.isFinite(years) || !Number.isFinite(months) || years < 0 || months < 0 || months > 11) return NaN;\n  return years*12 + months;\n}\nfunction updateAgeHelper(){\n  const total = totalAgeMonths();\n  const el = $('ageHelper');\n  if(total === null){ el.className='age-helper'; el.textContent='Ingresa años y/o meses.'; return; }\n  if(Number.isNaN(total)){ el.className='age-helper warning'; el.textContent='Meses debe estar entre 0 y 11.'; return; }\n  const years=Math.floor(total/12), months=total%12;\n  const label=[years?`${years} ${years===1?'año':'años'}`:'',months?`${months} ${months===1?'mes':'meses'}`:''].filter(Boolean).join(' ')||'0 meses';\n  el.className='age-helper ok'; el.textContent=`Edad registrada: ${label} · ${total} meses totales`;\n}\n['ageYears','ageExtraMonths'].forEach(id=>{ const el=$(id); if(el) el.addEventListener('input', updateAgeHelper); });\n
+
+function totalAgeMonths(){
+  const yRaw = val('ageYears');
+  const mRaw = val('ageExtraMonths');
+  if(yRaw==='' && mRaw==='') return null;
+  const years = yRaw==='' ? 0 : Number(yRaw);
+  const months = mRaw==='' ? 0 : Number(mRaw);
+  if(!Number.isFinite(years) || !Number.isFinite(months) || years < 0 || months < 0 || months > 11) return NaN;
+  return years*12 + months;
+}
+function updateAgeHelper(){
+  const total = totalAgeMonths();
+  const el = $('ageHelper');
+  if(total === null){ el.className='age-helper'; el.textContent='Ingresa años y/o meses.'; return; }
+  if(Number.isNaN(total)){ el.className='age-helper warning'; el.textContent='Meses debe estar entre 0 y 11.'; return; }
+  const years=Math.floor(total/12), months=total%12;
+  const label=[years?`${years} ${years===1?'año':'años'}`:'',months?`${months} ${months===1?'mes':'meses'}`:''].filter(Boolean).join(' ')||'0 meses';
+  el.className='age-helper ok'; el.textContent=`Edad registrada: ${label} · ${total} meses totales`;
+}
+['ageYears','ageExtraMonths'].forEach(id=>{ const el=$(id); if(el) el.addEventListener('input', updateAgeHelper); });
+
 function talFRScore(age, fr){
   if(age < 6){
     if(fr <= 40) return 0;
@@ -43,7 +63,32 @@ function talSpo2Score(s){
   if(s >= 90) return 2;
   return 3;
 }
-function calcTal(){\n  const age = totalAgeMonths();\n  const fr=num('talFR'), spo2=num('talSpo2');\n  if(age === null || Number.isNaN(age)){\n    $('talResult').className='result empty';\n    $('talResult').textContent='Ingresa una edad válida en años y/o meses.';\n    return;\n  }\n  if(age >= 24){\n    const years=Math.floor(age/12), months=age%12;\n    $('talResult').className='result';\n    $('talResult').innerHTML=`<div class="compat"><strong>Tal modificado no calculado</strong><span>Edad registrada: ${years} años${months ? ' '+months+' meses' : ''}. En esta beta el Tal está limitado a menores de 24 meses por su uso en bronquiolitis.</span></div><p style="font-size:12px;color:#647777">Utiliza una herramienta apropiada para la edad y el contexto clínico.</p>`;\n    return;\n  }\n  if(val('talFR')==='' || val('talSpo2')==='' || val('talWheeze')==='' || val('talMuscle')===''){\n    $('talResult').className='result empty';\n    $('talResult').textContent='Faltan datos para calcular el Tal modificado.';\n    return;\n  }\n  const a=talFRScore(age,fr), b=Number(val('talWheeze')), c=talSpo2Score(spo2), d=Number(val('talMuscle'));\n  const total=a+b+c+d;\n  const sev= total<=5?'Leve': total<=8?'Moderado':'Severo';\n  const ageGroup=age<6?'< 6 meses':'6–23 meses';\n  $('talResult').className='result';\n  $('talResult').innerHTML=`<div class="score">${total}/12</div><span class="severity ${severityClass(sev)}">${sev}</span><ul class="breakdown"><li>Edad: <strong>${age} meses</strong></li><li>FR (${ageGroup}): <strong>${a} pt</strong></li><li>Sibilancias/crepitaciones: <strong>${b} pt</strong></li><li>SpO₂ aire ambiental: <strong>${c} pt</strong></li><li>Musculatura accesoria: <strong>${d} pt</strong></li></ul>`;\n}
+function calcTal(){
+  const age = totalAgeMonths();
+  const fr=num('talFR'), spo2=num('talSpo2');
+  if(age === null || Number.isNaN(age)){
+    $('talResult').className='result empty';
+    $('talResult').textContent='Ingresa una edad válida en años y/o meses.';
+    return;
+  }
+  if(age >= 24){
+    const years=Math.floor(age/12), months=age%12;
+    $('talResult').className='result';
+    $('talResult').innerHTML=`<div class="compat"><strong>Tal modificado no calculado</strong><span>Edad registrada: ${years} años${months ? ' '+months+' meses' : ''}. En esta beta el Tal está limitado a menores de 24 meses por su uso en bronquiolitis.</span></div><p style="font-size:12px;color:#647777">Utiliza una herramienta apropiada para la edad y el contexto clínico.</p>`;
+    return;
+  }
+  if(val('talFR')==='' || val('talSpo2')==='' || val('talWheeze')==='' || val('talMuscle')===''){
+    $('talResult').className='result empty';
+    $('talResult').textContent='Faltan datos para calcular el Tal modificado.';
+    return;
+  }
+  const a=talFRScore(age,fr), b=Number(val('talWheeze')), c=talSpo2Score(spo2), d=Number(val('talMuscle'));
+  const total=a+b+c+d;
+  const sev= total<=5?'Leve': total<=8?'Moderado':'Severo';
+  const ageGroup=age<6?'< 6 meses':'6–23 meses';
+  $('talResult').className='result';
+  $('talResult').innerHTML=`<div class="score">${total}/12</div><span class="severity ${severityClass(sev)}">${sev}</span><ul class="breakdown"><li>Edad: <strong>${age} meses</strong></li><li>FR (${ageGroup}): <strong>${a} pt</strong></li><li>Sibilancias/crepitaciones: <strong>${b} pt</strong></li><li>SpO₂ aire ambiental: <strong>${c} pt</strong></li><li>Musculatura accesoria: <strong>${d} pt</strong></li></ul>`;
+}
 
 function wdfFRScore(fr){
   if(fr < 30) return 0;

@@ -8,7 +8,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>KinePed Beta</title>
   <link rel="manifest" href="manifest.json">
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css?v=0.4.2">
 
   <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png">
   <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
@@ -20,7 +20,7 @@
 <header class="app-header">
   <div>
     <div class="eyebrow">Herramienta kinesica pediátrica</div>
-    <h1>KinePed <span>β v0.4.1</span></h1>
+    <h1>KinePed <span>β v0.4.2</span></h1>
   </div>
   <button class="icon-btn" onclick="openModal('aboutModal')" aria-label="Información">?</button>
 </header>
@@ -33,23 +33,18 @@
         <p>Ingresa una vez y reutiliza los datos. La edad se convierte internamente a meses cuando un score lo requiere.</p>
       </div>
     </div>
-    <div class="age-weight-grid">
-      <div>
-        <div class="field-title">Edad</div>
-        <div class="grid two age-grid">
-          <label>Años
-            <input id="ageYears" type="number" min="0" max="18" step="1" inputmode="numeric" placeholder="Ej. 5">
-          </label>
-          <label>Meses
-            <input id="ageExtraMonths" type="number" min="0" max="11" step="1" inputmode="numeric" placeholder="0–11">
-          </label>
-        </div>
-        <div id="ageHelper" class="age-helper">Ingresa años y/o meses.</div>
-      </div>
+    <div class="patient-input-grid">
+      <label>Años
+        <input id="ageYears" type="number" min="0" max="18" step="1" inputmode="numeric" placeholder="Ej. 5">
+      </label>
+      <label>Meses
+        <input id="ageExtraMonths" type="number" min="0" max="11" step="1" inputmode="numeric" placeholder="0–11">
+      </label>
       <label>Peso <span class="unit">kg</span>
         <input id="weightKg" type="number" min="0.1" step="0.1" inputmode="decimal" placeholder="Ej. 18">
       </label>
     </div>
+    <div id="ageHelper" class="age-helper">Ingresa años y/o meses.</div>
 
     <div id="scoreAdvisor" class="score-advisor neutral">
       <div class="advisor-icon">i</div>
@@ -452,6 +447,6 @@
   </div>
 </div>
 
-<script src="app.js"></script>
+<script src="app.js?v=0.4.2"></script>
 </body>
 </html>

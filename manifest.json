@@ -5,7 +5,7 @@
   "display": "standalone",
   "background_color": "#f3f7f6",
   "theme_color": "#0f766e",
-  "description": "KinePed beta v0.4.1: orientador por edad, Tal, Wood-Downes-Ferrés, Pulmonary Score, CNAF/AIRVO, SAFI/PAFI/ROX, OI/OSI y VM pediátrica.",
+  "description": "KinePed beta v0.4.2: corrección de navegación, orientador por edad, Tal, Wood-Downes-Ferrés, Pulmonary Score, CNAF/AIRVO, SAFI/PAFI/ROX, OI/OSI y VM pediátrica.",
   "scope": "./",
   "icons": [
     {

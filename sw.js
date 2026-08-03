@@ -1,10 +1,12 @@
-const CACHE = 'kineped-beta-v5';
+const CACHE = 'kineped-beta-v6';
 
 const ASSETS = [
   './',
   './index.html',
   './styles.css',
+  './styles.css?v=0.4.2',
   './app.js',
+  './app.js?v=0.4.2',
   './manifest.json',
   './apple-touch-icon.png',
   './icon-192.png',
