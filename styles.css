@@ -58,3 +58,54 @@ dialog{width:min(92vw,560px);border:0;padding:0;background:transparent}dialog::b
 .patient-bar div:first-child{display:grid;gap:3px}.patient-bar span{font-size:.68rem;color:var(--muted);font-weight:800}.patient-bar strong{font-size:.82rem;color:var(--ink)}
 .patient-actions{display:flex;gap:6px}.patient-actions button,.patient-empty{border:1px solid var(--line);background:#fff;color:var(--blue);border-radius:11px;padding:8px 9px;font-size:.67rem;font-weight:850}
 .patient-actions .danger-lite{color:#b43a50;background:#fff7f8;border-color:#f0d4d9}.patient-empty{width:100%;margin:12px 0;padding:12px;background:#f8fbff}
+
+/* v0.7: header fix for narrow iPhone widths */
+.topbar{
+  grid-template-columns:42px minmax(0,1fr) 42px;
+}
+.brand{min-width:0;padding:0 4px}
+.brand-title,.brand-subtitle{overflow:hidden;text-overflow:ellipsis}
+.brand-subtitle{white-space:normal;line-height:1.15}
+@media(max-width:430px){
+  .topbar{padding-left:10px;padding-right:10px;gap:6px}
+  .round-btn{width:40px;height:40px;border-radius:13px}
+  .brand-title{font-size:1.02rem}
+  .brand-subtitle{font-size:.61rem}
+}
+@media(max-width:350px){
+  .brand-subtitle{display:none}
+}
+
+.creator-card{
+  display:grid;
+  grid-template-columns:52px 1fr;
+  gap:13px;
+  align-items:start;
+  margin:18px 0 6px;
+  padding:15px;
+  border-radius:20px;
+  background:linear-gradient(135deg,#f8fbff,#eef5fc);
+  border:1px solid var(--line);
+}
+.creator-mark{
+  width:52px;
+  height:52px;
+  border-radius:16px;
+  display:grid;
+  place-items:center;
+  background:var(--blue);
+  color:#fff;
+  font-weight:950;
+  letter-spacing:.03em;
+}
+.creator-card strong{
+  display:block;
+  font-size:.82rem;
+  margin:2px 0 5px;
+}
+.creator-card p{
+  margin:0;
+  color:var(--muted);
+  font-size:.7rem;
+  line-height:1.45;
+}

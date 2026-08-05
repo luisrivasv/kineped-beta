@@ -510,7 +510,14 @@ function references(){
  <li>PALICC-2 — ventilación protectora en PARDS: VT, Pplat, ΔP y titulación de PEEP.</li>
  <li>PEMVECC — consenso europeo de ventilación mecánica pediátrica, incluida estrategia en enfermedad obstructiva/restrictiva.</li>
  </ol></section>
- <div class="warn-strip">Fecha de revisión del contenido de esta versión: agosto de 2026.</div>`;
+ <div class="warn-strip">Fecha de revisión del contenido de esta versión: agosto de 2026.</div>
+ <section class="creator-card">
+   <div class="creator-mark">PK</div>
+   <div>
+     <strong>Desarrollado por Luis Rivas</strong>
+     <p>PediKine nace como una herramienta de apoyo clínico y consulta rápida para el trabajo respiratorio pediátrico. La información se revisa y actualiza a medida que se incorporan nuevas fuentes y módulos.</p>
+   </div>
+ </section>`;
 }
 function missing(){openModal('Faltan datos','<p>Completa todos los campos requeridos antes de calcular.</p>')}
 

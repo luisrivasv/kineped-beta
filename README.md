@@ -1,32 +1,38 @@
-# PediKine v0.6
+# PediKine v0.8 — correcciones visuales/PWA + autoría
 
-## Correcciones finales de esta sesión
+Cambios:
+- Icono real para pantalla de inicio:
+  - icon-192.png
+  - icon-512.png
+  - apple-touch-icon.png
+- manifest.json actualizado con icons y purpose maskable.
+- index.html agrega apple-touch-icon para iPhone.
+- Encabezado ajustado para pantallas angostas: el botón ? ya no invade título/subtítulo.
+- Ejemplo de nebulización cambia visualmente de ".7" a "0,7".
+- Sin cambios en lógica clínica respecto de v0.6.
 
-### CNAF
-- Predeterminado: estrategia con corte en 10 kg.
-- ≤10 kg: 2 L/kg/min.
-- >10 kg: 20 L/min + 0,5 L/min por cada kg sobre 10.
-- Se mantiene RCH (corte 12 kg) como protocolo alternativo seleccionable.
-- Se añade referencia AEP/SECIP 2021 y se mantiene Fisher & Paykel para rangos técnicos de interfaz.
+## Al actualizar en iPhone
+Como iOS puede mantener el icono antiguo:
+1. borra el acceso directo actual de PediKine de la pantalla de inicio;
+2. abre la URL nueva en Safari;
+3. recarga;
+4. Compartir → Añadir a pantalla de inicio.
 
-### Salbutamol nebulizado
-- Calculadora principal basada en peso:
-  - 0,15 mg/kg/dosis.
-  - mínimo 2,5 mg.
-  - máximo 5 mg.
-- Convierte automáticamente:
-  mg → mL de salbutamol 5 mg/mL → mL de SF para completar 4 mL.
-- Mantiene las pautas chilenas fijas como referencias separadas.
-- Mantiene modo manual para comprobar ejemplos como:
-  0,7 mL × 5 mg/mL = 3,5 mg + 3,3 mL SF = 4 mL.
-- Alerta para confirmar siempre la concentración disponible.
-
-## Publicación
-Reemplazar en la raíz de GitHub:
+## GitHub
+Reemplazar:
 - index.html
 - styles.css
 - app.js
 - manifest.json
 - sw.js
 
-README.md es opcional.
+Agregar además:
+- icon-192.png
+- icon-512.png
+- apple-touch-icon.png
+
+
+## v0.8
+- Se agrega al final de la sección Referencias una tarjeta independiente de autoría.
+- Texto: “Desarrollado por Luis Rivas”.
+- La autoría queda visualmente separada de la bibliografía clínica.
