@@ -1,49 +1,5 @@
-const CACHE = 'kineped-beta-v6';
-
-const ASSETS = [
-  './',
-  './index.html',
-  './styles.css',
-  './styles.css?v=0.4.2',
-  './app.js',
-  './app.js?v=0.4.2',
-  './manifest.json',
-  './apple-touch-icon.png',
-  './icon-192.png',
-  './icon-512.png',
-  './icon-1024.png'
-];
-
-self.addEventListener('install', event => {
-  self.skipWaiting();
-  event.waitUntil(
-    caches.open(CACHE).then(cache => cache.addAll(ASSETS))
-  );
-});
-
-self.addEventListener('activate', event => {
-  event.waitUntil(
-    Promise.all([
-      self.clients.claim(),
-      caches.keys().then(keys =>
-        Promise.all(
-          keys.filter(key => key !== CACHE).map(key => caches.delete(key))
-        )
-      )
-    ])
-  );
-});
-
-self.addEventListener('fetch', event => {
-  if (event.request.method !== 'GET') return;
-
-  event.respondWith(
-    fetch(event.request)
-      .then(response => {
-        const copy = response.clone();
-        caches.open(CACHE).then(cache => cache.put(event.request, copy));
-        return response;
-      })
-      .catch(() => caches.match(event.request))
-  );
-});
+const CACHE='pedikine-v06';
+const ASSETS=['./','./index.html','./styles.css','./app.js','./manifest.json'];
+self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)));self.skipWaiting()});
+self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))));self.clients.claim()});
+self.addEventListener('fetch',e=>{e.respondWith(fetch(e.request).then(r=>{const x=r.clone();caches.open(CACHE).then(c=>c.put(e.request,x));return r}).catch(()=>caches.match(e.request).then(r=>r||caches.match('./index.html'))))});
