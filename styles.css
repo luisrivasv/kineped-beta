@@ -109,3 +109,45 @@ dialog{width:min(92vw,560px);border:0;padding:0;background:transparent}dialog::b
   font-size:.7rem;
   line-height:1.45;
 }
+
+/* v0.9 — definitive topbar positioning */
+#backBtn{grid-column:1}
+.brand{grid-column:2;min-width:0;text-align:center}
+#infoBtn{grid-column:3;justify-self:end}
+
+.brand-title-wrap{
+  display:flex;
+  align-items:baseline;
+  justify-content:center;
+  gap:5px;
+  min-width:0;
+}
+.brand-title{
+  overflow:visible !important;
+  text-overflow:clip !important;
+  white-space:nowrap;
+}
+.version-badge{
+  font-size:.52rem;
+  line-height:1;
+  font-weight:800;
+  color:#8a97ab;
+  letter-spacing:.02em;
+  white-space:nowrap;
+}
+@media(max-width:430px){
+  .topbar{
+    grid-template-columns:42px minmax(0,1fr) 42px;
+    padding-left:10px;
+    padding-right:10px;
+    gap:5px;
+  }
+  .brand-title{font-size:1rem}
+  .brand-subtitle{
+    font-size:.58rem;
+    line-height:1.12;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+}

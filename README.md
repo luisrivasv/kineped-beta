@@ -1,38 +1,28 @@
-# PediKine v0.8 — correcciones visuales/PWA + autoría
+# PediKine v0.9
 
-Cambios:
-- Icono real para pantalla de inicio:
+## Cambios visuales
+- Se corrige definitivamente el encabezado:
+  - botón volver fijo a la izquierda;
+  - título siempre en el centro;
+  - botón ? siempre a la derecha.
+- Se agrega `v0.9` en pequeño junto al título.
+- Se reemplaza el icono PWA por la imagen proporcionada por el usuario.
+- Se generan:
+  - apple-touch-icon.png
   - icon-192.png
   - icon-512.png
-  - apple-touch-icon.png
-- manifest.json actualizado con icons y purpose maskable.
-- index.html agrega apple-touch-icon para iPhone.
-- Encabezado ajustado para pantallas angostas: el botón ? ya no invade título/subtítulo.
-- Ejemplo de nebulización cambia visualmente de ".7" a "0,7".
-- Sin cambios en lógica clínica respecto de v0.6.
 
-## Al actualizar en iPhone
-Como iOS puede mantener el icono antiguo:
-1. borra el acceso directo actual de PediKine de la pantalla de inicio;
-2. abre la URL nueva en Safari;
-3. recarga;
-4. Compartir → Añadir a pantalla de inicio.
-
-## GitHub
-Reemplazar:
+## Para actualizar en GitHub
+Reemplaza:
 - index.html
 - styles.css
 - app.js
 - manifest.json
 - sw.js
 
-Agregar además:
+Y reemplaza/agrega:
+- apple-touch-icon.png
 - icon-192.png
 - icon-512.png
-- apple-touch-icon.png
 
-
-## v0.8
-- Se agrega al final de la sección Referencias una tarjeta independiente de autoría.
-- Texto: “Desarrollado por Luis Rivas”.
-- La autoría queda visualmente separada de la bibliografía clínica.
+En iPhone, para ver el nuevo icono, elimina el acceso directo antiguo y vuelve a agregar la app desde Safari.
