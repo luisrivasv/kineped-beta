@@ -1,28 +1,29 @@
-# PediKine v0.9
+# PediKine v0.10 — corrección definitiva de icono PWA
 
-## Cambios visuales
-- Se corrige definitivamente el encabezado:
-  - botón volver fijo a la izquierda;
-  - título siempre en el centro;
-  - botón ? siempre a la derecha.
-- Se agrega `v0.9` en pequeño junto al título.
-- Se reemplaza el icono PWA por la imagen proporcionada por el usuario.
-- Se generan:
-  - apple-touch-icon.png
-  - icon-192.png
-  - icon-512.png
+Problema detectado:
+iOS/Safari puede conservar en caché `apple-touch-icon.png` aunque el contenido del archivo haya cambiado.
 
-## Para actualizar en GitHub
-Reemplaza:
-- index.html
-- styles.css
-- app.js
-- manifest.json
-- sw.js
+Corrección:
+- Nuevos nombres de archivo para forzar una URL distinta:
+  - pedikine-v010-180.png
+  - pedikine-v010-192.png
+  - pedikine-v010-512.png
+  - pedikine-v010-32.png
+- `apple-touch-icon` y `apple-touch-icon-precomposed`.
+- favicon explícito.
+- manifest con nuevas URLs de icono.
+- manifest versionado en el HTML.
+- nueva caché `pedikine-v010`.
+- versión visible actualizada a v0.10.
 
-Y reemplaza/agrega:
-- apple-touch-icon.png
-- icon-192.png
-- icon-512.png
+IMPORTANTE:
+Sube TODOS los archivos del ZIP a GitHub, incluidos los nuevos PNG.
 
-En iPhone, para ver el nuevo icono, elimina el acceso directo antiguo y vuelve a agregar la app desde Safari.
+Luego en iPhone:
+1. Borra PediKine de la pantalla de inicio.
+2. Cierra esa pestaña de Safari.
+3. Abre nuevamente la URL.
+4. Recarga la página.
+5. Compartir → Añadir a pantalla de inicio.
+
+Los iconos anteriores pueden permanecer en el repositorio, pero ya no son referenciados.
