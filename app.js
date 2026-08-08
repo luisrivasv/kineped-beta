@@ -14,6 +14,8 @@ let hf={profile:'secip10'};
 let airway={};
 let drugs={};
 let vm={vt:'',pip:'',pplat:'',peep:'',peepi:'',flow:'',ve:'',rr:'',modeProfile:'general'};
+let pram={spo2:'',suprasternal:null,scalene:null,air:null,wheeze:null};
+let oxy={spo2:'',fio2:'',rr:'',pao2:''};
 
 const REFERENCES={
   minsal2024:'https://diprece.minsal.cl/wp-content/uploads/2024/11/Orientacion-Tecnica-Bronquiolitis_v1_IRA_menores_5.pdf',
@@ -79,7 +81,7 @@ function clearAllPatientData(){
  tal={age:'',rr:'',wheeze:null,spo2:'',accessory:null};
  wdf={rr:'',hr:'',wheeze:null,retractions:null,air:null,cyanosis:null};
  ps={ageGroup:'lt6',rr:'',wheeze:null,scm:null,spo2:''};
- hf={profile:'secip10'};airway={};drugs={};vm={vt:'',pip:'',pplat:'',peep:'',peepi:'',flow:'',ve:'',rr:'',modeProfile:'general'};
+ hf={profile:'secip10'};airway={};drugs={};vm={vt:'',pip:'',pplat:'',peep:'',peepi:'',flow:'',ve:'',rr:'',modeProfile:'general'};pram={spo2:'',suprasternal:null,scalene:null,air:null,wheeze:null};oxy={spo2:'',fio2:'',rr:'',pao2:''};
 }
 function requirePatient(fields=['weight']){
  const ok=fields.every(f=>patient[f]!=='');
@@ -92,14 +94,14 @@ function setNav(name){document.querySelectorAll('[data-nav]').forEach(b=>b.class
 function openModal(title,html){modalTitle.textContent=title;modalBody.innerHTML=html;modal.showModal()}
 modalClose.onclick=()=>modal.close();
 infoBtn.onclick=()=>openGeneralInfo();
-backBtn.onclick=()=>{if(['talResult','wdfResult','psResult'].includes(route))setRoute('scores');else if(['tal','wdf','ps'].includes(route))setRoute('scores');else setRoute('home')};
+backBtn.onclick=()=>{if(['talResult','wdfResult','psResult','pramResult'].includes(route))setRoute('scores');else if(['tal','wdf','ps','pram'].includes(route))setRoute('scores');else setRoute('home')};
 document.querySelectorAll('[data-nav]').forEach(b=>b.onclick=()=>setRoute(b.dataset.nav));
 
 function header(title,subtitle='Herramientas respiratorias pediátricas',back=false){pageTitle.textContent=title;pageSubtitle.textContent=subtitle;backBtn.hidden=!back}
 function openGeneralInfo(){openModal('Sobre PediKine',`
-<p><strong>PediKine v0.2</strong> reúne herramientas de apoyo para evaluación respiratoria pediátrica.</p>
-<div class="warn-strip"><strong>No prescribe tratamiento ni reemplaza juicio clínico.</strong> Verifica siempre evolución del paciente, protocolo local, población para la que fue desarrollado cada score y la fuente original.</div>
-<p>Los módulos activos de esta versión son TAL modificado, Wood-Downes-Ferrés, Pulmonary Score y cálculo orientativo de flujo CNAF según la fórmula seleccionada.</p>`)}
+<p><strong>PediKine v0.11</strong> reúne herramientas respiratorias pediátricas de apoyo clínico y consulta rápida.</p>
+<div class="warn-strip"><strong>No prescribe tratamiento ni reemplaza juicio clínico.</strong> Verifica siempre el diagnóstico, evolución, protocolo local, concentración farmacológica y fuente original.</div>
+<p>Esta versión incorpora PRAM, PAFI/SAFI/ROX convencional y un algoritmo de inhaloterapia/corticoides basado en peso.</p>`)}
 function notReady(name){openModal(name,`<p>La fachada ya está preparada para este módulo, pero todavía no lo activamos porque falta validar la lógica clínica y las fuentes.</p>`)}
 
 function home(){
@@ -109,14 +111,15 @@ function home(){
    <div class="mascot">👶🏻</div>
  </section>
  ${patientBanner()}
- <div class="section-head"><h2>Herramientas clínicas</h2><span>7 módulos activos</span></div>
+ <div class="section-head"><h2>Herramientas clínicas</h2><span>8 módulos activos</span></div>
  <section class="grid">
-  <button class="tile t-blue" onclick="setRoute('scores')"><div class="tile-icon">🫁</div><strong>Scores respiratorios</strong><small>TAL, WDF y Pulmonary Score</small></button>
+  <button class="tile t-blue" onclick="setRoute('scores')"><div class="tile-icon">🫁</div><strong>Scores respiratorios</strong><small>PRAM, TAL, Pulmonary Score y WDF</small></button>
   <button class="tile t-green" onclick="setRoute('cnahf')"><div class="tile-icon">≈</div><strong>CNAF</strong><small>Flujo por peso + rango de interfaz</small></button>
   <button class="tile t-violet" onclick="setRoute('airway')"><div class="tile-icon">▥</div><strong>Vía aérea / IOT</strong><small>TOT, hoja, LMA y preparación RSI</small></button>
   <button class="tile t-cyan" onclick="setRoute('vm')"><div class="tile-icon">⌁</div><strong>Ventilación mecánica</strong><small>Módulo independiente</small></button>
   <button class="tile t-orange" onclick="setRoute('vitals')"><div class="tile-icon">♡</div><strong>Signos vitales</strong><small>Rangos pediátricos por edad</small></button>
-  <button class="tile t-rose" onclick="setRoute('drugs')"><div class="tile-icon">✚</div><strong>Fármacos</strong><small>RSI y broncodilatadores</small></button>
+  <button class="tile t-rose" onclick="setRoute('drugs')"><div class="tile-icon">✚</div><strong>Fármacos</strong><small>Inhaloterapia, corticoides y RSI</small></button>
+  <button class="tile t-blue" onclick="setRoute('oxygenation')"><div class="tile-icon">O₂</div><strong>Oxigenación</strong><small>PAFI · SAFI · ROX</small></button>
   <button class="tile t-cyan" onclick="setRoute('references')"><div class="tile-icon">▤</div><strong>Referencias</strong><small>Bibliografía por herramienta</small></button>
  </section>
  <div class="disclaimer">ⓘ Herramienta educativa y de apoyo. No sustituye la evaluación individual del paciente ni los protocolos institucionales.</div>`;
@@ -124,24 +127,98 @@ function home(){
 
 function scores(){
  header('Scores respiratorios','Selecciona una herramienta',true);setNav('scores');
- return `${patientBanner()}<div class="info-strip"><strong>Scores activos</strong><br>Cada resultado muestra los componentes que más aportan al puntaje y sus limitaciones.</div>
+ return `${patientBanner()}<div class="info-strip"><strong>Organizados por contexto clínico.</strong><br>PRAM queda como score preferido para crisis asmática en 2–17 años, coherente con GINA 2026.</div>
+ <div class="section-head"><h2>Asma</h2><span>PRAM recomendado</span></div>
  <section class="tool-list">
-  ${toolRow('tal','🫁','TAL modificado','Bronquiolitis / obstrucción bronquial. Versión MINSAL Chile 2024.')}
-  ${toolRow('wdf','♙','Wood-Downes-Ferrés','Seis dominios clínicos; puntaje total 0–14.')}
-  ${toolRow('ps','◉','Pulmonary Score','Crisis asmática: FR, sibilancias y uso de ECM.')}
+  ${toolRow('pram','★','PRAM','Crisis asmática · 2–17 años · recomendado como score validado en GINA 2026.')}
+  ${toolRow('ps','◉','Pulmonary Score','Alternativa para crisis asmática según protocolo local.')}
+  ${toolRow('wdf','♙','Wood-Downes-Ferrés','Alternativa / referencia histórica o local.')}
+ </section>
+ <div class="section-head"><h2>Bronquiolitis / SBO</h2><span>contexto local</span></div>
+ <section class="tool-list">
+  ${toolRow('tal','🫁','TAL modificado','Bronquiolitis / obstrucción bronquial · versión MINSAL Chile.')}
  </section>`;
 }
 function toolRow(r,icon,name,desc){return `<button class="tool-row" onclick="setRoute('${r}')"><div class="square">${icon}</div><div><h3>${name}</h3><p>${desc}</p></div><div class="arrow">›</div></button>`}
 
 function option(key,val,text,stateName){
- const state=stateName==='tal'?tal:stateName==='wdf'?wdf:ps;
+ const state=stateName==='tal'?tal:stateName==='wdf'?wdf:stateName==='pram'?pram:ps;
  return `<button class="option ${state[key]===val?'selected':''}" data-state="${stateName}" data-key="${key}" data-val="${val}"><b>${val}</b><span>${text}</span></button>`
 }
 function bindOptions(){
  document.querySelectorAll('.option[data-state]').forEach(btn=>btn.onclick=()=>{
-  let target=btn.dataset.state==='tal'?tal:btn.dataset.state==='wdf'?wdf:ps;
+  let target=btn.dataset.state==='tal'?tal:btn.dataset.state==='wdf'?wdf:btn.dataset.state==='pram'?pram:ps;
   target[btn.dataset.key]=Number(btn.dataset.val);render();
  });
+}
+
+
+function pramSpo2Score(v){
+ if(v==='')return null;v=+v;
+ if(v>=95)return 0;
+ if(v>=92)return 1;
+ return 2;
+}
+function pramView(){
+ header('PRAM','Crisis asmática · 2–17 años',true);setNav('scores');
+ let age=patient.ageYears===''?null:+patient.ageYears;
+ let ageWarn=(age!==null&&(age<2||age>17))
+  ?`<div class="warn-strip"><strong>Fuera del rango de uso seleccionado:</strong> en PediKine PRAM se limita a 2–17 años, consistente con la cohorte pediátrica reciente y el uso recomendado en asma pediátrica.</div>`:'';
+ return `${patientBanner()}${ageWarn}
+ <div class="info-strip"><strong>PRAM · Pediatric Respiratory Assessment Measure</strong><br>Evalúa SpO₂, tiraje supraesternal, contracción de escalenos, entrada de aire y sibilancias. Total 0–12.</div>
+ ${inputPanel('1. Saturación de oxígeno',`
+  <div class="field"><label>SpO₂ <small>%</small></label><input id="pramSpo2" type="number" min="50" max="100" value="${pram.spo2}" placeholder="Ej: 93"></div>
+  <div id="pramSpo2Preview"></div>`)}
+ ${inputPanel('2. Tiraje supraesternal',`<div class="option-list">
+  ${option('suprasternal',0,'Ausente','pram')}${option('suprasternal',2,'Presente','pram')}</div>`)}
+ ${inputPanel('3. Contracción de escalenos',`<div class="option-list">
+  ${option('scalene',0,'Ausente','pram')}${option('scalene',2,'Presente','pram')}</div>`)}
+ ${inputPanel('4. Entrada de aire',`<div class="option-list">
+  ${option('air',0,'Normal','pram')}
+  ${option('air',1,'Disminuida en bases','pram')}
+  ${option('air',2,'Disminuida en ápices y bases','pram')}
+  ${option('air',3,'Mínima o ausente','pram')}</div>`)}
+ ${inputPanel('5. Sibilancias',`<div class="option-list">
+  ${option('wheeze',0,'Ausentes','pram')}
+  ${option('wheeze',1,'Sólo espiratorias','pram')}
+  ${option('wheeze',2,'Inspiratorias ± espiratorias','pram')}
+  ${option('wheeze',3,'Audibles sin estetoscopio o tórax silente con entrada de aire mínima/ausente','pram')}</div>`)}
+ <button id="pramCalc" class="primary">Calcular PRAM</button>
+ <div class="spacer"></div>
+ <button class="secondary" onclick="pramInfo()">? Qué mide y limitaciones</button>`;
+}
+function pramInfo(){
+ openModal('PRAM',`<p><strong>Clasificación:</strong> 0–3 leve · 4–7 moderada · 8–12 severa.</p>
+ <p>Si existe asimetría, para entrada de aire se puntúa el campo pulmonar más afectado.</p>
+ <div class="warn-strip">No sustituye la valoración clínica. Un tórax silente se interpreta junto con entrada de aire mínima/ausente.</div>`);
+}
+function bindPram(){
+ bindOptions();
+ let s=document.getElementById('pramSpo2');
+ const u=()=>{
+  pram.spo2=s.value;
+  let x=pramSpo2Score(pram.spo2);
+  document.getElementById('pramSpo2Preview').innerHTML=x===null?'':`<div class="score-mini">Puntaje SpO₂: <strong>${x}/2</strong></div>`;
+ };
+ s.oninput=u;u();
+ document.getElementById('pramCalc').onclick=()=>{
+  u();
+  if(pram.spo2===''||pram.suprasternal===null||pram.scalene===null||pram.air===null||pram.wheeze===null)return missing();
+  setRoute('pramResult');
+ };
+}
+function pramResult(){
+ let parts=[
+  ['SpO₂',pramSpo2Score(pram.spo2),2],
+  ['Tiraje supraesternal',pram.suprasternal,2],
+  ['Escalenos',pram.scalene,2],
+  ['Entrada de aire',pram.air,3],
+  ['Sibilancias',pram.wheeze,3]
+ ];
+ let total=parts.reduce((s,x)=>s+x[1],0);
+ return resultView('PRAM',parts,total,12,severity3(total,3,7),
+ `<div class="info-strip"><strong>PRAM:</strong> 0–3 leve · 4–7 moderada · 8–12 severa.</div>
+ <div class="warn-strip">GINA 2026 recomienda utilizar escalas clínicas validadas para evaluar gravedad de exacerbaciones pediátricas y cita PRAM como ejemplo.</div>`);
 }
 
 function talRR(age,rr){
@@ -271,7 +348,8 @@ function hfView(){
  ${flow!==null?`<section class="value-card"><div class="label">Flujo calculado</div><div class="value">${fmt(flow)} L/min</div><div class="sub">${hf.profile==='secip10'?(+patient.weight<=10?'2 L/kg/min':'20 L/min + 0,5 L/min por cada kg sobre 10'):(+patient.weight<=12?'2 L/kg/min':'24 L/min + 0,5 L/min por cada kg sobre 12')}</div></section>`:''}
  <section class="panel"><h3>Optiflow Junior 2 — rangos técnicos de flujo</h3><p class="tiny">El tamaño de cánula se selecciona por ajuste anatómico y oclusión de narinas, no sólo por peso. Estos son rangos técnicos publicados para la interfaz; no equivalen a una recomendación automática de talla.</p>
  <div class="cannula-table">${cannulas.map(c=>`<div class="cannula-row"><strong>${c[0]}</strong><span>${c[1]}</span><span>${c[2]}</span></div>`).join('')}</div></section>
- <div class="warn-strip">No uses el flujo calculado de forma aislada para iniciar/escalar soporte. La respuesta clínica, trabajo respiratorio, oxigenación, tolerancia, límites del equipo y protocolo local siguen mandando.</div>`;
+ <div class="warn-strip">No uses el flujo calculado de forma aislada para iniciar/escalar soporte. La respuesta clínica, trabajo respiratorio, oxigenación, tolerancia, límites del equipo y protocolo local siguen mandando.</div>
+ <button class="primary" onclick="setRoute('oxygenation')">Evaluar oxigenación → ROX / SAFI</button>`;
 }
 function bindHf(){
  let w=document.getElementById('hfWeight'),p=document.getElementById('hfProfile');
@@ -343,79 +421,76 @@ function vitalsView(){
 }
 
 function drugDose(v){return v===null?'—':(Math.round(v*100)/100).toString().replace('.',',')}
+function drugDose(v){return v===null?'—':(Math.round(v*100)/100).toString().replace('.',',')}
+function asthmaDrugByWeight(w){
+ if(w===null||w<5)return null;
+ if(w<=10)return {albMg:2.5,albMl:0.5,mdi:4,iprUnit:250,iprHour:500,iprPuffs:4,cont:7.5};
+ if(w<=20)return {albMg:3.75,albMl:0.75,mdi:6,iprUnit:500,iprHour:1000,iprPuffs:6,cont:11.25};
+ return {albMg:5,albMl:1,mdi:8,iprUnit:500,iprHour:1000,iprPuffs:8,cont:15};
+}
+function dexAsthmaByWeight(w){
+ if(w===null||w<5)return null;
+ if(w<=8)return 4;
+ if(w<=12)return 6;
+ return 8;
+}
 function drugsView(){
- header('Fármacos','RSI + respiratorios',true);setNav('home');
+ header('Fármacos','Respiratorios + corticoides + RSI',true);setNav('home');
  let w=patient.weight===''?null:+patient.weight, age=patient.ageYears===''?null:+patient.ageYears;
- return `${patientBanner()}<div class="warn-strip"><strong>Módulo de alto riesgo:</strong> las dosis se muestran como referencia para profesionales. Confirma indicación, concentración disponible, vía, dosis máxima y protocolo local antes de administrar.</div>
- <section class="panel"><h3>Paciente</h3>
- <div class="field"><label>Peso <small>kg</small></label><input id="drugWeight" type="number" min="0.5" step="0.1" value="${patient.weight}" placeholder="Ej: 12"></div>
- <div class="field"><label>Edad <small>años</small></label><input id="drugAge" type="number" min="0" step="0.1" value="${patient.ageYears}" placeholder="Ej: 2"></div></section>
- ${w?`<section class="panel"><span class="eyebrow">Secuencia de intubación</span><h3 style="margin-top:7px">RSI — referencia RCH</h3>
- <div class="tool-list">
- <div class="tool-row"><div class="square">K</div><div><h3>Ketamina IV</h3><p>0,5–2 mg/kg → <strong>${drugDose(w*.5)}–${drugDose(w*2)} mg</strong>. Titular/reducir según compromiso fisiológico.</p></div><div></div></div>
- <div class="tool-row"><div class="square">R</div><div><h3>Rocuronio IV</h3><p>1,2–1,6 mg/kg → <strong>${drugDose(w*1.2)}–${drugDose(w*1.6)} mg</strong>.</p></div><div></div></div>
- </div></section>
- <section class="panel"><span class="eyebrow">Broncodilatación</span><h3 style="margin-top:7px">Salbutamol / ipratropio</h3>
- <div class="tool-list">
- <div class="tool-row"><div class="square">S</div><div><h3>Salbutamol MDI + aerocámara</h3><p>${age!==null&&age<6?'Menor de 6 años: 4–6 puff en episodio leve; 6 puff en moderado/severo según esquema RCH.':'6 años o más: 8–12 puff en episodio leve; 12 puff en moderado/severo según esquema RCH.'} Cada puff: 100 μg.</p></div><div></div></div>
- <div class="tool-row"><div class="square">I</div><div><h3>Ipratropio MDI</h3><p>En crisis severa: ${age!==null&&age<6?'2 puff':'4 puff'} cada 20 min × 3 dosis durante la primera hora según la referencia RCH.</p></div><div></div></div>
- </div></section>`:'<div class="info-strip">Ingresa el peso para calcular las dosis de RSI.</div>'}
- <section class="panel"><span class="eyebrow">Nebulización</span><h3 style="margin-top:7px">Salbutamol 0,5% = 5 mg/mL</h3>
- <div class="tool-list">
-  <div class="tool-row"><div class="square">NB</div><div><h3>Consenso chileno — escolares</h3><p><strong>0,5–1 mL</strong> de salbutamol 5 mg/mL = <strong>2,5–5 mg</strong>, completar con SF hasta <strong>4 mL</strong>; cada 20 min × 3 en crisis severa.</p></div><div></div></div>
-  <div class="tool-row"><div class="square">.7</div><div><h3>Ejemplo 0,7 mL + 3,3 mL SF</h3><p>0,7 mL × 5 mg/mL = <strong>3,5 mg</strong>; volumen final 4 mL. Está dentro del rango 2,5–5 mg del consenso chileno, pero <strong>0,7 mL no es una dosis universal</strong>.</p></div><div></div></div>
-  <div class="tool-row"><div class="square">PS</div><div><h3>Preescolar chileno — crisis grave</h3><p><strong>0,5 mL salbutamol + 3,5 mL SF</strong>, con O₂ 6–8 L/min por 6–8 min; repetir cada 20 min × 3.</p></div><div></div></div>
- </div>
- <div class="field"><label>Calculadora por peso</label><select id="nebProtocol">
-   <option value="weight">0,15 mg/kg/dosis (mín. 2,5 mg; máx. 5 mg)</option>
-   <option value="manual">Conversión manual mL → mg</option>
- </select></div>
- <div id="nebWeightCalc" class="score-mini">${w?`Peso ${fmt(w)} kg: cálculo automático disponible.`:'Ingresa el peso del paciente para calcular la dosis.'}</div>
- <div id="nebManual" style="display:none"><div class="field"><label>Volumen de salbutamol 5 mg/mL <small>mL</small></label><input id="nebVol" type="number" min="0" max="1" step="0.1" placeholder="Ej: 0.7"></div>
- <div id="nebCalc" class="score-mini">Convierte volumen a mg y calcula SF hasta completar 4 mL.</div></div>
- </section>
- <section class="panel"><h3>Ipratropio nebulizado</h3>
-  <div class="info-strip"><strong>NHS/guías pediátricas:</strong> 250 microgramos en menores de 12 años y 500 microgramos en mayores de 12, habitualmente asociado a β₂-agonista en crisis severa.</div>
-  <p class="tiny">En el consenso preescolar chileno se describe adicionar 0,5 mL de bromuro de ipratropio a la nebulización; verifica siempre la concentración comercial disponible antes de convertir mL a microgramos.</p>
- </section>
- <div class="warn-strip">La calculadora por peso usa 0,15 mg/kg/dosis con límites de 2,5–5 mg como perfil de referencia. Las pautas chilenas fijas se muestran por separado porque no son la misma estrategia. Antes de usar una dosis en mL confirma SIEMPRE la concentración: 0,7 mL sólo equivale a 3,5 mg si la solución es 5 mg/mL (0,5%).</div>`;
+ let a=asthmaDrugByWeight(w), dex=dexAsthmaByWeight(w);
+ let pred=w?Math.min(w*2,60):null;
+ let predChile=w?Math.min(w,40):null;
+ let mg=w?Math.min(w*50,2000):null;
+ let croupDexLow=w?w*.15:null;
+ let croupDexHigh=w?Math.min(w*.6,12):null;
+ let croupPred=w?w:null;
+ return `${patientBanner()}
+ <div class="warn-strip"><strong>Referencia para profesionales.</strong> PediKine calcula desde el peso, pero debes confirmar diagnóstico, indicación, concentración disponible, vía y protocolo local.</div>
+
+ ${w?`<section class="value-card"><div class="label">Paciente para cálculo farmacológico</div><div class="value">${fmt(w)} kg</div><div class="sub">${patientAgeText()}</div></section>`:
+ `<div class="info-strip">Ingresa el peso en “Paciente actual” para activar los cálculos automáticos.</div>`}
+
+ <div class="section-head"><h2>Asma aguda — inhaloterapia</h2><span>CHOP 2026 por peso</span></div>
+ ${a?`<section class="panel">
+  <div class="tool-list">
+   <div class="tool-row"><div class="square">S</div><div><h3>Salbutamol nebulizado</h3><p><strong>${fmt(a.albMg)} mg</strong> = <strong>${fmt(a.albMl)} mL</strong> de solución 0,5% (5 mg/mL). Para volumen total 4 mL: agregar ${fmt(4-a.albMl)} mL de SF.</p></div><div></div></div>
+   <div class="tool-row"><div class="square">MDI</div><div><h3>Salbutamol MDI 100 μg/puff</h3><p><strong>${a.mdi} puff</strong> por dosis en el esquema por peso CHOP.</p></div><div></div></div>
+   <div class="tool-row"><div class="square">I</div><div><h3>Ipratropio nebulizado</h3><p><strong>${a.iprUnit} μg cada 20 min × 2</strong> en el esquema ED CHOP; alternativa UniNeb total 1 h: ${a.iprHour} μg.</p></div><div></div></div>
+   <div class="tool-row"><div class="square">I+</div><div><h3>Ipratropio MDI</h3><p><strong>${a.iprPuffs} puff</strong> en el esquema por peso CHOP.</p></div><div></div></div>
+   <div class="tool-row"><div class="square">∞</div><div><h3>Salbutamol continuo</h3><p><strong>${fmt(a.cont)} mg/h</strong> para esta banda de peso. Uso en exacerbación severa/refractaria con monitorización.</p></div><div></div></div>
+  </div>
+  <div class="info-strip">SOCHINEP-SER Chile utiliza 2,5–5 mg nebulizados en crisis severa escolar, con SF hasta 4 mL. El esquema CHOP por peso queda dentro de ese rango en pacientes ≥5 kg.</div>
+ </section>`:
+ `<div class="warn-strip">Para pesos &lt;5 kg no se automatiza un esquema de “asma” por bandas CHOP; en lactantes pequeños el diagnóstico y la indicación de broncodilatador requieren contexto clínico y protocolo específico.</div>`}
+
+ <div class="section-head"><h2>Corticoides — asma</h2><span>peso automático</span></div>
+ ${w?`<section class="panel">
+  <div class="tool-list">
+   ${dex!==null?`<div class="tool-row"><div class="square">Dx</div><div><h3>Dexametasona — CHOP</h3><p><strong>${fmt(dex)} mg</strong> por dosis según banda de peso. En crisis leve-moderada puede repetirse en 24–48 h según protocolo.</p></div><div></div></div>`:''}
+   <div class="tool-row"><div class="square">Pr</div><div><h3>Prednisona / metilprednisolona — CHOP</h3><p><strong>${fmt(pred)} mg</strong> (2 mg/kg; máximo 60 mg) PO/IV según fármaco y situación clínica.</p></div><div></div></div>
+   <div class="tool-row"><div class="square">CL</div><div><h3>Prednisona — referencia chilena preescolar</h3><p><strong>${fmt(predChile)} mg</strong> (1 mg/kg/día; máximo 40 mg) según consenso chileno.</p></div><div></div></div>
+   <div class="tool-row"><div class="square">Mg</div><div><h3>Sulfato de magnesio IV</h3><p><strong>${fmt(mg)} mg</strong> (50 mg/kg; máximo 2 g) como terapia de escalamiento en exacerbación severa según protocolo.</p></div><div></div></div>
+  </div>
+ </section>`:''}
+
+ <div class="section-head"><h2>Crup / vía aérea superior</h2><span>RCH</span></div>
+ ${w?`<section class="panel">
+  <div class="tool-list">
+   <div class="tool-row"><div class="square">Dx</div><div><h3>Dexametasona</h3><p>Leve-moderado con indicación: <strong>${fmt(croupDexLow)} mg</strong> (0,15 mg/kg). Severo/amenaza vital: <strong>${fmt(croupDexHigh)} mg</strong> (0,6 mg/kg; máx. 12 mg).</p></div><div></div></div>
+   <div class="tool-row"><div class="square">Pr</div><div><h3>Prednisolona oral</h3><p><strong>${fmt(croupPred)} mg</strong> (1 mg/kg) como alternativa en cuadros leves-moderados según protocolo.</p></div><div></div></div>
+   <div class="tool-row"><div class="square">Ad</div><div><h3>Adrenalina nebulizada</h3><p><strong>5 mL de adrenalina 1:1000 sin diluir</strong> en crup grave/amenaza vital. Puede repetirse si es necesario y requiere observación posterior.</p></div><div></div></div>
+  </div>
+ </section>`:''}
+
+ <div class="section-head"><h2>RSI</h2><span>referencia RCH</span></div>
+ ${w?`<section class="panel"><div class="tool-list">
+   <div class="tool-row"><div class="square">K</div><div><h3>Ketamina IV</h3><p>0,5–2 mg/kg → <strong>${drugDose(w*.5)}–${drugDose(w*2)} mg</strong>. Titular/reducir según compromiso fisiológico.</p></div><div></div></div>
+   <div class="tool-row"><div class="square">R</div><div><h3>Rocuronio IV</h3><p>1,2–1,6 mg/kg → <strong>${drugDose(w*1.2)}–${drugDose(w*1.6)} mg</strong>.</p></div><div></div></div>
+ </div></section>`:''}
+
+ <div class="warn-strip"><strong>Concentraciones importan:</strong> los mL sólo son válidos para la concentración escrita en cada tarjeta. Si la presentación es distinta, usa los mg/μg como referencia y verifica la conversión.</div>`;
 }
-function bindDrugs(){
- let w=document.getElementById('drugWeight'),a=document.getElementById('drugAge');
- if(w)w.onchange=()=>{patient.weight=w.value;patient.ageYears=a.value;render()};
- if(a)a.onchange=()=>{patient.weight=w.value;patient.ageYears=a.value;if(+a.value<2)patient.ageMonths=Math.round(+a.value*12).toString();render()};
-
- let protocol=document.getElementById('nebProtocol'),manual=document.getElementById('nebManual'),
-     n=document.getElementById('nebVol'),out=document.getElementById('nebCalc'),
-     weightOut=document.getElementById('nebWeightCalc');
-
- const updateWeightNeb=()=>{
-   if(!weightOut)return;
-   if(patient.weight===''){weightOut.innerHTML='Ingresa el peso del paciente para calcular la dosis.';return}
-   let kg=+patient.weight;
-   let raw=kg*0.15;
-   let dose=Math.min(5,Math.max(2.5,raw));
-   let ml=dose/5;
-   let sf=4-ml;
-   let limit=raw<2.5?'mínimo aplicado':raw>5?'máximo aplicado':'0,15 mg/kg';
-   weightOut.innerHTML=`<strong>${fmt(dose)} mg</strong> (${limit}) → <strong>${fmt(ml)} mL</strong> de salbutamol 5 mg/mL + <strong>${fmt(sf)} mL SF</strong> = 4 mL total.`;
- };
- const updateMode=()=>{
-   if(!protocol)return;
-   if(manual)manual.style.display=protocol.value==='manual'?'block':'none';
-   if(weightOut)weightOut.style.display=protocol.value==='weight'?'block':'none';
-   updateWeightNeb();
- };
- if(protocol)protocol.onchange=updateMode;
- if(n&&out)n.oninput=()=>{
-   let ml=+n.value;
-   if(!n.value){out.innerHTML='Convierte volumen a mg y calcula SF hasta completar 4 mL.';return}
-   let mg=ml*5,sf=Math.max(0,4-ml);
-   out.innerHTML=`${fmt(ml)} mL = <strong>${fmt(mg)} mg</strong> · agregar <strong>${fmt(sf)} mL SF</strong> para completar 4 mL.`;
- };
- updateMode();
-}
-
+function bindDrugs(){}
 
 
 function vmView(){
@@ -491,21 +566,53 @@ function bindVm(){
  let p=document.getElementById('vmProfile');if(p)p.onchange=()=>{vm.modeProfile=p.value;render()};
 }
 
+
+function oxygenationView(){
+ header('Oxigenación','PAFI · SAFI · ROX',true);setNav('home');
+ let fio2=oxy.fio2===''?null:(+oxy.fio2>1?+oxy.fio2/100:+oxy.fio2);
+ let safi=(fio2&&oxy.spo2!=='')?+oxy.spo2/fio2:null;
+ let pafi=(fio2&&oxy.pao2!=='')?+oxy.pao2/fio2:null;
+ let rox=(fio2&&oxy.spo2!==''&&oxy.rr!=='')?((+oxy.spo2/fio2)/+oxy.rr):null;
+ return `${patientBanner()}
+ <div class="info-strip"><strong>Una sola entrada, tres índices.</strong><br>FiO₂ puede escribirse como 40 (%) o 0,40.</div>
+ <section class="panel"><h3>Datos</h3>
+  <div class="field"><label>SpO₂ <small>%</small></label><input id="oxySpo2" type="number" min="50" max="100" value="${oxy.spo2}" placeholder="Ej: 94"></div>
+  <div class="field"><label>FiO₂ <small>% o decimal</small></label><input id="oxyFio2" type="number" min="0.21" max="100" step="0.01" value="${oxy.fio2}" placeholder="Ej: 40"></div>
+  <div class="field"><label>Frecuencia respiratoria <small>resp/min · para ROX</small></label><input id="oxyRR" type="number" min="1" value="${oxy.rr}" placeholder="Ej: 42"></div>
+  <div class="field"><label>PaO₂ <small>mmHg · opcional para PAFI</small></label><input id="oxyPaO2" type="number" min="1" value="${oxy.pao2}" placeholder="Ej: 72"></div>
+ </section>
+ ${(safi!==null||pafi!==null||rox!==null)?`<section class="panel"><h3>Resultados</h3>
+  <div class="cannula-table">
+   ${safi!==null?`<div class="cannula-row"><strong>SAFI</strong><span>${fmt(safi)}</span><span>SpO₂/FiO₂</span></div>`:''}
+   ${pafi!==null?`<div class="cannula-row"><strong>PAFI</strong><span>${fmt(pafi)}</span><span>PaO₂/FiO₂</span></div>`:''}
+   ${rox!==null?`<div class="cannula-row"><strong>ROX</strong><span>${fmt(rox)}</span><span>(S/F)/FR</span></div>`:''}
+  </div></section>`:''}
+ <div class="warn-strip"><strong>ROX en pediatría:</strong> se muestra sólo el ROX convencional. No se incorporan pROX/ROX-M ni un semáforo automático porque no existe un punto de corte pediátrico universal y la capacidad predictiva publicada es modesta.</div>`;
+}
+function bindOxygenation(){
+ let s=document.getElementById('oxySpo2'),f=document.getElementById('oxyFio2'),
+     r=document.getElementById('oxyRR'),p=document.getElementById('oxyPaO2');
+ const save=()=>{oxy.spo2=s.value;oxy.fio2=f.value;oxy.rr=r.value;oxy.pao2=p.value;render()};
+ [s,f,r,p].forEach(el=>{if(el)el.onchange=save});
+}
+
 function references(){
  header('Bibliografía','Fuentes usadas en esta versión',true);setNav('references');
  return `<section class="panel"><h3>TAL modificado</h3><ol class="reference-list">
  <li>MINSAL Chile 2024 — Orientación técnica bronquiolitis.</li><li>Luarte-Martínez et al. — validez y confiabilidad del TAL modificado en niños chilenos.</li></ol></section>
  <section class="panel"><h3>Wood-Downes-Ferrés</h3><ol class="reference-list"><li>Anales de Pediatría — tabla WDF usada en protocolo de CNAF.</li></ol></section>
- <section class="panel"><h3>Pulmonary Score</h3><ol class="reference-list"><li>Consenso REGAP de asma pediátrica — tabla PS y clasificación integrada con SpO₂.</li></ol></section>
+ <section class="panel"><h3>PRAM / asma aguda</h3><ol class="reference-list"><li>GINA 2026 Strategy Report — uso de escalas clínicas validadas; PRAM citado como ejemplo.</li><li>Canadian Paediatric Society — tabla PRAM 0–12 y clasificación.</li><li>Chalut et al. — validación original del PRAM.</li><li>Pergo et al., 2026 — PRAM en niños 2–17 años y predicción de hospitalización.</li></ol></section>
+<section class="panel"><h3>Pulmonary Score</h3><ol class="reference-list"><li>Consenso REGAP de asma pediátrica — tabla PS y clasificación integrada con SpO₂.</li></ol></section>
  <section class="panel"><h3>CNAF</h3><ol class="reference-list"><li>Pilar Orive FJ, López Fernández YM. Alto flujo. Protocolos AEP/SECIP, 2021.</li><li>Estrategia publicada con corte de 10 kg: 2 L/kg/min hasta 10 kg y +0,5 L/kg/min por kg adicional.</li><li>Royal Children's Hospital Melbourne — alternativa con corte en 12 kg.</li><li>Fisher & Paykel — Optiflow Junior 2 / rangos técnicos de interfaz.</li></ol></section>
  <section class="panel"><h3>Vía aérea / RSI</h3><ol class="reference-list"><li>Royal Children's Hospital — Emergency airway management y Trauma Airway Management.</li><li>RCH Butterfly Ward — tablas neonatales de TOT y hojas Miller.</li></ol></section>
  <section class="panel"><h3>Signos vitales</h3><ol class="reference-list"><li>RCH — Acceptable ranges for physiological variables.</li><li>RCH — Temperature management.</li></ol></section>
  <section class="panel"><h3>Fármacos respiratorios</h3><ol class="reference-list">
- <li>SOCHINEP-SER — Consenso chileno de asma escolar: salbutamol nebulizado 0,5–1 mL de solución 0,5% + SF hasta 4 mL.</li>
- <li>Perfil de cálculo por peso incorporado: salbutamol 0,15 mg/kg/dosis, con límites 2,5–5 mg; conversión automática para solución 5 mg/mL.</li>
- <li>Consenso chileno de asma preescolar: crisis grave 0,5 mL salbutamol + 3,5 mL SF.</li>
- <li>NHS pediatric acute asthma — salbutamol 2,5/5 mg e ipratropio 250/500 mcg según edad.</li>
+ <li>CHOP Asthma ED Clinical Pathway — revisado mayo 2026: salbutamol, ipratropio y esteroides por peso.</li>
+ <li>CHOP Asthma PICU/Inpatient — revisado abril 2026: salbutamol continuo y escalamiento.</li>
+ <li>SOCHINEP-SER — Consenso chileno de asma escolar: salbutamol nebulizado 2,5–5 mg + SF hasta 4 mL.</li>
+ <li>RCH Croup — dexametasona, prednisolona y adrenalina nebulizada.</li>
  </ol></section>
+<section class="panel"><h3>Oxigenación / ROX</h3><ol class="reference-list"><li>Vásquez-Hoyos et al., 2024 — ROX en menores de 2 años con CNAF; asociación con desenlace pero capacidad predictiva modesta.</li><li>Yuniar et al., 2024 — ROX convencional mostró mejor desempeño que mP-ROX en esa cohorte.</li></ol></section>
  <section class="panel"><h3>Ventilación mecánica</h3><ol class="reference-list">
  <li>PALICC-2 — ventilación protectora en PARDS: VT, Pplat, ΔP y titulación de PEEP.</li>
  <li>PEMVECC — consenso europeo de ventilación mecánica pediátrica, incluida estrategia en enfermedad obstructiva/restrictiva.</li>
@@ -525,6 +632,8 @@ function render(){
  let html='';
  if(route==='home')html=home();
  if(route==='scores')html=scores();
+ if(route==='pram')html=pramView();
+ if(route==='pramResult')html=pramResult();
  if(route==='tal')html=talView();
  if(route==='talResult')html=talResult();
  if(route==='wdf')html=wdfView();
@@ -536,8 +645,10 @@ function render(){
  if(route==='vm')html=vmView();
  if(route==='vitals')html=vitalsView();
  if(route==='drugs')html=drugsView();
+ if(route==='oxygenation')html=oxygenationView();
  if(route==='references')html=references();
  app.innerHTML=html;
+ if(route==='pram')bindPram();
  if(route==='tal')bindTal();
  if(route==='wdf')bindWdf();
  if(route==='ps')bindPs();
@@ -545,8 +656,9 @@ function render(){
  if(route==='airway')bindAirway();
  if(route==='drugs')bindDrugs();
  if(route==='vm')bindVm();
+ if(route==='oxygenation')bindOxygenation();
 }
-window.setRoute=setRoute;window.notReady=notReady;window.talInfo=talInfo;window.editPatient=editPatient;window.confirmNewPatient=confirmNewPatient;window.clearAllPatientData=clearAllPatientData;
+window.setRoute=setRoute;window.notReady=notReady;window.talInfo=talInfo;window.pramInfo=pramInfo;window.editPatient=editPatient;window.confirmNewPatient=confirmNewPatient;window.clearAllPatientData=clearAllPatientData;
 
 if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
 render();

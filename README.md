@@ -1,29 +1,26 @@
-# PediKine v0.10 — corrección definitiva de icono PWA
+# PediKine v0.11
 
-Problema detectado:
-iOS/Safari puede conservar en caché `apple-touch-icon.png` aunque el contenido del archivo haya cambiado.
+Cambios principales:
+- PRAM agregado y priorizado para crisis asmática.
+- Scores reorganizados por contexto.
+- Nuevo módulo Oxigenación: PAFI, SAFI y ROX convencional.
+- CNAF → acceso directo a Oxigenación/ROX.
+- No se incorporan pROX ni ROX-M.
+- Fármacos respiratorios recalculados por bandas de peso usando CHOP 2026:
+  - salbutamol nebulizado
+  - salbutamol MDI
+  - ipratropio nebulizado/MDI
+  - salbutamol continuo
+- Corticoides y escalamiento:
+  - dexametasona
+  - prednisona/metilprednisolona
+  - sulfato de magnesio
+- Crup:
+  - dexametasona
+  - prednisolona
+  - adrenalina nebulizada
+- Encabezado actualizado a v0.11.
+- Iconos PWA versionados como v011 para evitar caché.
 
-Corrección:
-- Nuevos nombres de archivo para forzar una URL distinta:
-  - pedikine-v010-180.png
-  - pedikine-v010-192.png
-  - pedikine-v010-512.png
-  - pedikine-v010-32.png
-- `apple-touch-icon` y `apple-touch-icon-precomposed`.
-- favicon explícito.
-- manifest con nuevas URLs de icono.
-- manifest versionado en el HTML.
-- nueva caché `pedikine-v010`.
-- versión visible actualizada a v0.10.
-
-IMPORTANTE:
-Sube TODOS los archivos del ZIP a GitHub, incluidos los nuevos PNG.
-
-Luego en iPhone:
-1. Borra PediKine de la pantalla de inicio.
-2. Cierra esa pestaña de Safari.
-3. Abre nuevamente la URL.
-4. Recarga la página.
-5. Compartir → Añadir a pantalla de inicio.
-
-Los iconos anteriores pueden permanecer en el repositorio, pero ya no son referenciados.
+Importante:
+Las dosis son apoyo profesional y deben confirmarse con el protocolo local y la concentración disponible.
