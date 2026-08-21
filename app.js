@@ -12,9 +12,9 @@ let ps={ageGroup:'lt6',rr:'',wheeze:null,scm:null,spo2:''};
 let patient={ageYears:'',ageMonths:'',weight:'',height:''};
 let hf={profile:'secip10'};
 let airway={};
-let drugs={};
+let drugs={salbConc:'5',ipraConc:'250',dexConc:'',predConc:''};
 let vm={vt:'',pip:'',pplat:'',peep:'',peepi:'',flow:'',ve:'',rr:'',modeProfile:'general'};
-let pram={spo2:'',suprasternal:null,scalene:null,air:null,wheeze:null};
+let pram={spo2:'',oxygenMode:'room',baselineSpo2:'',baselineBelow92:false,suprasternal:null,scalene:null,air:null,wheeze:null};
 let oxy={spo2:'',fio2:'',rr:'',pao2:''};
 
 const REFERENCES={
@@ -28,10 +28,25 @@ const REFERENCES={
 
 
 function hasPatient(){return patient.weight!=='' || patient.ageYears!=='' || patient.ageMonths!=='' || patient.height!==''}
+function numOrNull(v){return v===''||v===null||v===undefined?null:+v}
+function validRange(v,min,max){let n=numOrNull(v);return n!==null&&Number.isFinite(n)&&n>=min&&n<=max}
+function patientTotalMonths(){
+ if(patient.ageYears==='' && patient.ageMonths==='') return null;
+ let y=patient.ageYears===''?0:+patient.ageYears;
+ let m=patient.ageMonths===''?0:+patient.ageMonths;
+ return y*12+m;
+}
+function patientAgeYearsDecimal(){
+ let m=patientTotalMonths();
+ return m===null?null:m/12;
+}
 function patientAgeText(){
- if(patient.ageMonths!=='' && +patient.ageMonths<24) return `${patient.ageMonths} meses`;
- if(patient.ageYears!=='') return `${patient.ageYears} años`;
- return 'edad no ingresada';
+ if(patient.ageYears==='' && patient.ageMonths==='') return 'edad no ingresada';
+ let y=patient.ageYears===''?0:+patient.ageYears;
+ let m=patient.ageMonths===''?0:+patient.ageMonths;
+ if(y>0 && m>0) return `${y} a ${m} m`;
+ if(y>0) return `${y} ${y===1?'año':'años'}`;
+ return `${m} ${m===1?'mes':'meses'}`;
 }
 function patientSummary(){
  if(!hasPatient()) return '';
@@ -49,21 +64,33 @@ function patientBanner(){
 }
 function editPatient(){
  openModal('Paciente actual',`
- <p>Estos datos se reutilizan automáticamente entre los módulos.</p>
- <div class="field"><label>Edad en años <small>puede ser decimal</small></label><input id="ptYears" type="number" min="0" step="0.1" value="${patient.ageYears}" placeholder="Ej: 2"></div>
- <div class="field"><label>Edad en meses <small>opcional, útil en lactantes</small></label><input id="ptMonths" type="number" min="0" step="1" value="${patient.ageMonths}" placeholder="Ej: 5"></div>
- <div class="field"><label>Peso <small>kg</small></label><input id="ptWeight" type="number" min="0.5" step="0.1" value="${patient.weight}" placeholder="Ej: 12"></div>
- <div class="field"><label>Talla <small>cm, opcional</small></label><input id="ptHeight" type="number" min="20" step="0.5" value="${patient.height}" placeholder="Ej: 86"></div>
+ <p>Ingresa la edad como <strong>años cumplidos + meses adicionales</strong>. Ej.: 2 años y 5 meses = “2” en años y “5” en meses.</p>
+ <div class="field"><label>Años cumplidos</label><input id="ptYears" type="number" inputmode="numeric" min="0" max="18" step="1" value="${patient.ageYears}" placeholder="Ej: 2"></div>
+ <div class="field"><label>Meses adicionales <small>0–11</small></label><input id="ptMonths" type="number" inputmode="numeric" min="0" max="11" step="1" value="${patient.ageMonths}" placeholder="Ej: 5"></div>
+ <div class="field"><label>Peso <small>kg</small></label><input id="ptWeight" type="number" min="0.5" max="200" step="0.1" value="${patient.weight}" placeholder="Ej: 12"></div>
+ <div class="field"><label>Talla <small>cm, opcional</small></label><input id="ptHeight" type="number" min="20" max="220" step="0.5" value="${patient.height}" placeholder="Ej: 86"></div>
+ <div id="patientValidation"></div>
  <button id="savePatient" class="primary">Guardar paciente</button>`);
  setTimeout(()=>{
    const save=document.getElementById('savePatient');
    if(save) save.onclick=()=>{
-     patient.ageYears=document.getElementById('ptYears').value;
-     patient.ageMonths=document.getElementById('ptMonths').value;
-     patient.weight=document.getElementById('ptWeight').value;
-     patient.height=document.getElementById('ptHeight').value;
-     if(patient.ageYears==='' && patient.ageMonths!=='') patient.ageYears=(+patient.ageMonths/12).toFixed(2);
-     if(patient.ageMonths==='' && patient.ageYears!=='' && +patient.ageYears<2) patient.ageMonths=Math.round(+patient.ageYears*12).toString();
+     let y=document.getElementById('ptYears').value;
+     let m=document.getElementById('ptMonths').value;
+     let w=document.getElementById('ptWeight').value;
+     let h=document.getElementById('ptHeight').value;
+     let errs=[];
+     if(y!=='' && (!Number.isInteger(+y)||+y<0||+y>18)) errs.push('Años: usa un entero entre 0 y 18.');
+     if(m!=='' && (!Number.isInteger(+m)||+m<0||+m>11)) errs.push('Meses: usa un entero entre 0 y 11.');
+     if(w!=='' && !validRange(w,0.5,200)) errs.push('Peso: revisa el valor ingresado.');
+     if(h!=='' && !validRange(h,20,220)) errs.push('Talla: revisa el valor ingresado.');
+     if(errs.length){
+       document.getElementById('patientValidation').innerHTML=`<div class="warn-strip"><strong>Revisar datos</strong><br>${errs.join('<br>')}</div>`;
+       return;
+     }
+     patient.ageYears=y;
+     patient.ageMonths=(y!==''||m!=='')?(m===''?'0':m):'';
+     patient.weight=w;
+     patient.height=h;
      modal.close();render();
    }
  },0);
@@ -81,7 +108,7 @@ function clearAllPatientData(){
  tal={age:'',rr:'',wheeze:null,spo2:'',accessory:null};
  wdf={rr:'',hr:'',wheeze:null,retractions:null,air:null,cyanosis:null};
  ps={ageGroup:'lt6',rr:'',wheeze:null,scm:null,spo2:''};
- hf={profile:'secip10'};airway={};drugs={};vm={vt:'',pip:'',pplat:'',peep:'',peepi:'',flow:'',ve:'',rr:'',modeProfile:'general'};pram={spo2:'',suprasternal:null,scalene:null,air:null,wheeze:null};oxy={spo2:'',fio2:'',rr:'',pao2:''};
+ hf={profile:'secip10'};airway={};drugs={salbConc:'5',ipraConc:'250',dexConc:'',predConc:''};vm={vt:'',pip:'',pplat:'',peep:'',peepi:'',flow:'',ve:'',rr:'',modeProfile:'general'};pram={spo2:'',oxygenMode:'room',baselineSpo2:'',baselineBelow92:false,suprasternal:null,scalene:null,air:null,wheeze:null};oxy={spo2:'',fio2:'',rr:'',pao2:''};
 }
 function requirePatient(fields=['weight']){
  const ok=fields.every(f=>patient[f]!=='');
@@ -99,9 +126,9 @@ document.querySelectorAll('[data-nav]').forEach(b=>b.onclick=()=>setRoute(b.data
 
 function header(title,subtitle='Herramientas respiratorias pediátricas',back=false){pageTitle.textContent=title;pageSubtitle.textContent=subtitle;backBtn.hidden=!back}
 function openGeneralInfo(){openModal('Sobre PediKine',`
-<p><strong>PediKine v0.11</strong> reúne herramientas respiratorias pediátricas de apoyo clínico y consulta rápida.</p>
-<div class="warn-strip"><strong>No prescribe tratamiento ni reemplaza juicio clínico.</strong> Verifica siempre el diagnóstico, evolución, protocolo local, concentración farmacológica y fuente original.</div>
-<p>Esta versión incorpora PRAM, PAFI/SAFI/ROX convencional y un algoritmo de inhaloterapia/corticoides basado en peso.</p>`)}
+<p><strong>PediKine v0.12</strong> reúne herramientas respiratorias pediátricas de apoyo clínico y consulta rápida.</p>
+<div class="warn-strip"><strong>No prescribe tratamiento ni reemplaza juicio clínico.</strong> Verifica diagnóstico, evolución, protocolo local, concentración farmacológica y fuente original.</div>
+<p>Esta versión mejora el ingreso de edad (años + meses), el componente SpO₂ de PRAM con oxigenoterapia, la validación de datos y la conversión farmacológica según concentración disponible.</p>`)}
 function notReady(name){openModal(name,`<p>La fachada ya está preparada para este módulo, pero todavía no lo activamos porque falta validar la lógica clínica y las fuentes.</p>`)}
 
 function home(){
@@ -159,15 +186,33 @@ function pramSpo2Score(v){
  if(v>=92)return 1;
  return 2;
 }
+function pramEffectiveSpo2(){
+ if(pram.oxygenMode==='room') return validRange(pram.spo2,50,100)?+pram.spo2:null;
+ if(pram.baselineBelow92) return 91.9;
+ return validRange(pram.baselineSpo2,50,100)?+pram.baselineSpo2:null;
+}
+function pramSpo2Label(){
+ if(pram.oxygenMode==='room') return 'SpO₂ en aire ambiente';
+ if(pram.baselineBelow92) return 'SpO₂ basal aire ambiente (<92% documentada)';
+ return 'SpO₂ basal previa en aire ambiente';
+}
 function pramView(){
  header('PRAM','Crisis asmática · 2–17 años',true);setNav('scores');
- let age=patient.ageYears===''?null:+patient.ageYears;
+ let age=patientAgeYearsDecimal();
  let ageWarn=(age!==null&&(age<2||age>17))
-  ?`<div class="warn-strip"><strong>Fuera del rango de uso seleccionado:</strong> en PediKine PRAM se limita a 2–17 años, consistente con la cohorte pediátrica reciente y el uso recomendado en asma pediátrica.</div>`:'';
+  ?`<div class="warn-strip"><strong>Fuera del rango de uso seleccionado:</strong> en PediKine PRAM se limita a 2–17 años.</div>`:'';
  return `${patientBanner()}${ageWarn}
  <div class="info-strip"><strong>PRAM · Pediatric Respiratory Assessment Measure</strong><br>Evalúa SpO₂, tiraje supraesternal, contracción de escalenos, entrada de aire y sibilancias. Total 0–12.</div>
  ${inputPanel('1. Saturación de oxígeno',`
-  <div class="field"><label>SpO₂ <small>%</small></label><input id="pramSpo2" type="number" min="50" max="100" value="${pram.spo2}" placeholder="Ej: 93"></div>
+  <div class="field"><label>Condición al medir SpO₂</label><select id="pramO2Mode">
+   <option value="room" ${pram.oxygenMode==='room'?'selected':''}>Aire ambiente</option>
+   <option value="supplemental" ${pram.oxygenMode==='supplemental'?'selected':''}>Recibiendo O₂ / CNAF</option>
+  </select></div>
+  ${pram.oxygenMode==='room'?`
+   <div class="field"><label>SpO₂ en aire ambiente <small>%</small></label><input id="pramSpo2" type="number" min="50" max="100" value="${pram.spo2}" placeholder="Ej: 93"></div>`:`
+   <div class="info-strip"><strong>No puntuar la SpO₂ actual bajo O₂ como si fuera basal.</strong><br>Si conoces una SpO₂ previa en aire ambiente, ingrésala. Si sólo está documentado que era &lt;92%, puedes marcarlo abajo.</div>
+   <div class="field"><label>SpO₂ basal previa en aire ambiente <small>% · opcional</small></label><input id="pramBaselineSpo2" type="number" min="50" max="100" value="${pram.baselineSpo2}" placeholder="Ej: 91"></div>
+   <label class="check-row"><input id="pramBelow92" type="checkbox" ${pram.baselineBelow92?'checked':''}> Sólo sé que la SpO₂ basal estaba documentada &lt;92%</label>`}
   <div id="pramSpo2Preview"></div>`)}
  ${inputPanel('2. Tiraje supraesternal',`<div class="option-list">
   ${option('suprasternal',0,'Ausente','pram')}${option('suprasternal',2,'Presente','pram')}</div>`)}
@@ -189,27 +234,46 @@ function pramView(){
 }
 function pramInfo(){
  openModal('PRAM',`<p><strong>Clasificación:</strong> 0–3 leve · 4–7 moderada · 8–12 severa.</p>
+ <p>Para el componente SpO₂ se utiliza la saturación en <strong>aire ambiente</strong>. Si el paciente ya recibe oxígeno y no existe un valor basal previo fiable, el PRAM completo no debe reconstruirse a partir de la SpO₂ corregida con O₂.</p>
  <p>Si existe asimetría, para entrada de aire se puntúa el campo pulmonar más afectado.</p>
- <div class="warn-strip">No sustituye la valoración clínica. Un tórax silente se interpreta junto con entrada de aire mínima/ausente.</div>`);
+ <div class="warn-strip">No retires soporte de oxígeno sólo para obtener un número si ello puede desestabilizar al paciente.</div>`);
 }
 function bindPram(){
  bindOptions();
+ let mode=document.getElementById('pramO2Mode');
+ if(mode) mode.onchange=()=>{pram.oxygenMode=mode.value;render()};
  let s=document.getElementById('pramSpo2');
+ let b=document.getElementById('pramBaselineSpo2');
+ let c=document.getElementById('pramBelow92');
  const u=()=>{
-  pram.spo2=s.value;
-  let x=pramSpo2Score(pram.spo2);
-  document.getElementById('pramSpo2Preview').innerHTML=x===null?'':`<div class="score-mini">Puntaje SpO₂: <strong>${x}/2</strong></div>`;
+  if(s) pram.spo2=s.value;
+  if(b) pram.baselineSpo2=b.value;
+  if(c) pram.baselineBelow92=c.checked;
+  let eff=pramEffectiveSpo2();
+  let box=document.getElementById('pramSpo2Preview');
+  if(!box)return;
+  if(eff===null){
+   box.innerHTML=`<div class="warn-strip"><strong>Componente SpO₂ no evaluable.</strong><br>Necesitas SpO₂ en aire ambiente o un valor basal previo documentado.</div>`;
+  }else{
+   let x=pramSpo2Score(eff);
+   box.innerHTML=`<div class="score-mini">${pramSpo2Label()}: <strong>${eff===91.9?'&lt;92%':fmt(eff)+'%'}</strong> · Puntaje <strong>${x}/2</strong></div>`;
+  }
  };
- s.oninput=u;u();
+ if(s)s.oninput=u;if(b)b.oninput=u;if(c)c.onchange=u;u();
  document.getElementById('pramCalc').onclick=()=>{
   u();
-  if(pram.spo2===''||pram.suprasternal===null||pram.scalene===null||pram.air===null||pram.wheeze===null)return missing();
+  if(pramEffectiveSpo2()===null){
+   openModal('PRAM incompleto',`<p>No es posible puntuar correctamente el componente SpO₂ porque el paciente recibe O₂ y no hay una saturación basal en aire ambiente disponible.</p><div class="warn-strip">No asumas 2 puntos sólo por el requerimiento de FiO₂. Si sabes que la basal estaba documentada &lt;92%, marca esa opción.</div>`);
+   return;
+  }
+  if(pram.suprasternal===null||pram.scalene===null||pram.air===null||pram.wheeze===null)return missing();
   setRoute('pramResult');
  };
 }
 function pramResult(){
+ let eff=pramEffectiveSpo2();
  let parts=[
-  ['SpO₂',pramSpo2Score(pram.spo2),2],
+  [pramSpo2Label(),pramSpo2Score(eff),2],
   ['Tiraje supraesternal',pram.suprasternal,2],
   ['Escalenos',pram.scalene,2],
   ['Entrada de aire',pram.air,3],
@@ -218,7 +282,7 @@ function pramResult(){
  let total=parts.reduce((s,x)=>s+x[1],0);
  return resultView('PRAM',parts,total,12,severity3(total,3,7),
  `<div class="info-strip"><strong>PRAM:</strong> 0–3 leve · 4–7 moderada · 8–12 severa.</div>
- <div class="warn-strip">GINA 2026 recomienda utilizar escalas clínicas validadas para evaluar gravedad de exacerbaciones pediátricas y cita PRAM como ejemplo.</div>`);
+ <div class="warn-strip">El componente SpO₂ fue calculado usando ${pram.oxygenMode==='room'?'aire ambiente':'un dato basal previo en aire ambiente'}, no la SpO₂ corregida bajo oxigenoterapia.</div>`);
 }
 
 function talRR(age,rr){
@@ -231,7 +295,7 @@ function talView(){
  header('TAL modificado','MINSAL Chile 2024',true);setNav('scores');
  return `<div class="info-strip">Evalúa <strong>frecuencia respiratoria por edad, sibilancias/crepitaciones, SpO₂ en aire ambiental y musculatura accesoria.</strong></div>
  ${inputPanel('1. Edad y frecuencia respiratoria',`
-  <div class="field"><label>Edad <small>meses</small></label><input id="talAge" type="number" inputmode="numeric" min="0" max="35" value="${tal.age!==''?tal.age:patient.ageMonths}" placeholder="Ej: 5"></div>
+  <div class="field"><label>Edad <small>meses</small></label><input id="talAge" type="number" inputmode="numeric" min="0" max="35" value="${tal.age!==''?tal.age:((patientTotalMonths()!==null&&patientTotalMonths()<=35)?patientTotalMonths():'')}" placeholder="Ej: 5"></div>
   <div class="field"><label>Frecuencia respiratoria <small>resp/min</small></label><input id="talRR" type="number" inputmode="numeric" value="${tal.rr}" placeholder="Ej: 52"></div><div id="talRRp"></div>`)}
  ${inputPanel('2. Sibilancias / crepitaciones',`<div class="option-list">
   ${option('wheeze',0,'Ninguna','tal')}${option('wheeze',1,'Sólo en espiración','tal')}${option('wheeze',2,'En espiración e inspiración con estetoscopio','tal')}${option('wheeze',3,'En espiración e inspiración sin estetoscopio','tal')}</div>`)}
@@ -245,7 +309,7 @@ function talInfo(){openModal('TAL modificado',`<p>En esta versión se emplea la 
 
 function bindTal(){
  bindOptions();const a=document.getElementById('talAge'),r=document.getElementById('talRR'),s=document.getElementById('talSpo2');
- const update=()=>{tal.age=a.value;patient.ageMonths=a.value;if(+a.value<24)patient.ageYears=(+a.value/12).toFixed(2);tal.rr=r.value;tal.spo2=s.value;let rs=talRR(tal.age,tal.rr),ss=talSat(tal.spo2);
+ const update=()=>{tal.age=a.value;tal.rr=r.value;tal.spo2=s.value;let rs=talRR(tal.age,tal.rr),ss=talSat(tal.spo2);
  document.getElementById('talRRp').innerHTML=rs===null?'':`<div class="score-mini">Puntaje FR: <strong>${rs}/3</strong></div>`;
  document.getElementById('talSatp').innerHTML=ss===null?'':`<div class="score-mini">Puntaje SpO₂: <strong>${ss}/3</strong></div>`};
  [a,r,s].forEach(x=>x.oninput=update);update();
@@ -382,23 +446,40 @@ function blade(age){
 }
 function airwayView(){
  header('Vía aérea / IOT','Preparación pediátrica',true);setNav('home');
- let tube=cuffedETT(patient.ageYears),depth=ettDepth(tube),lma=lmaSize(patient.weight);
+ let age=patientAgeYearsDecimal();
+ let tube=cuffedETT(age===null?'':age),depth=ettDepth(tube),lma=lmaSize(patient.weight);
  return `${patientBanner()}<div class="info-strip"><strong>Preparar IOT</strong><br>Edad y peso quedan guardados como paciente actual y se reutilizan en otros módulos.</div>
  <section class="panel"><h3>Paciente</h3>
- <div class="field"><label>Edad <small>años (decimales permitidos)</small></label><input id="awAge" type="number" min="0" step="0.1" value="${patient.ageYears}" placeholder="Ej: 2"></div>
- <div class="field"><label>Peso <small>kg</small></label><input id="awWeight" type="number" min="0.5" step="0.1" value="${patient.weight}" placeholder="Ej: 12"></div></section>
+ <div class="field"><label>Años cumplidos</label><input id="awYears" type="number" min="0" max="18" step="1" value="${patient.ageYears}" placeholder="Ej: 2"></div>
+ <div class="field"><label>Meses adicionales <small>0–11</small></label><input id="awMonths" type="number" min="0" max="11" step="1" value="${patient.ageMonths}" placeholder="Ej: 5"></div>
+ <div class="field"><label>Peso <small>kg</small></label><input id="awWeight" type="number" min="0.5" max="200" step="0.1" value="${patient.weight}" placeholder="Ej: 12"></div>
+ <div id="awValidation"></div></section>
  ${tube!==null?`<section class="value-card"><div class="label">TOT cuffed estimado</div><div class="value">${tube.toFixed(1)} mm</div><div class="sub">Preparar también ${(tube-.5).toFixed(1)} y ${(tube+.5).toFixed(1)} mm · fórmula edad/4 + 3,5</div></section>
  <section class="panel"><h3>Equipo sugerido para preparar</h3>
  <div class="tool-list">
  <div class="tool-row"><div class="square">↕</div><div><h3>Profundidad oral inicial</h3><p>≈ ${depth} cm por regla 3 × diámetro interno. Confirmar siempre clínicamente + ETCO₂ y según protocolo/imágenes.</p></div><div></div></div>
- <div class="tool-row"><div class="square">⌁</div><div><h3>Hoja de laringoscopio</h3><p>${blade(patient.ageYears)}</p></div><div></div></div>
+ <div class="tool-row"><div class="square">⌁</div><div><h3>Hoja de laringoscopio</h3><p>${blade(age===null?'':age)}</p></div><div></div></div>
  ${lma?`<div class="tool-row"><div class="square">◯</div><div><h3>Dispositivo supraglótico / LMA</h3><p>Talla orientativa ${lma[0]} (${lma[1]}). Confirmar tabla del fabricante del dispositivo disponible.</p></div><div></div></div>`:''}
  </div></section>`:''}
  <div class="warn-strip">Las fórmulas de TOT y profundidad son aproximaciones. En neonatos/prematuros usa tablas específicas por peso/EG. La posición del TOT debe confirmarse con capnografía de onda continua y evaluación clínica.</div>
  <button class="primary" onclick="setRoute('vm')">Continuar a Ventilación Mecánica →</button><div class="spacer"></div>
  <button class="secondary" onclick="setRoute('drugs')">Ver fármacos para RSI →</button>`;
 }
-function bindAirway(){let a=document.getElementById('awAge'),w=document.getElementById('awWeight');if(a)a.onchange=()=>{patient.ageYears=a.value;if(+a.value<2)patient.ageMonths=Math.round(+a.value*12).toString();patient.weight=w.value;render()};if(w)w.onchange=()=>{patient.ageYears=a.value;patient.weight=w.value;render()}}
+function bindAirway(){
+ let y=document.getElementById('awYears'),m=document.getElementById('awMonths'),w=document.getElementById('awWeight');
+ const save=()=>{
+  let errs=[];
+  if(y.value!==''&&(!Number.isInteger(+y.value)||+y.value<0||+y.value>18))errs.push('Años inválidos.');
+  if(m.value!==''&&(!Number.isInteger(+m.value)||+m.value<0||+m.value>11))errs.push('Meses inválidos.');
+  if(w.value!==''&&!validRange(w.value,0.5,200))errs.push('Peso inválido.');
+  if(errs.length){document.getElementById('awValidation').innerHTML=`<div class="warn-strip">${errs.join('<br>')}</div>`;return}
+  patient.ageYears=y.value;
+  patient.ageMonths=(y.value!==''||m.value!=='')?(m.value===''?'0':m.value):'';
+  patient.weight=w.value;
+  render();
+ };
+ [y,m,w].forEach(el=>{if(el)el.onchange=save});
+}
 
 const vitals=[
  ['RN término','60–95','120–170','25–60'],
@@ -421,12 +502,11 @@ function vitalsView(){
 }
 
 function drugDose(v){return v===null?'—':(Math.round(v*100)/100).toString().replace('.',',')}
-function drugDose(v){return v===null?'—':(Math.round(v*100)/100).toString().replace('.',',')}
 function asthmaDrugByWeight(w){
  if(w===null||w<5)return null;
- if(w<=10)return {albMg:2.5,albMl:0.5,mdi:4,iprUnit:250,iprHour:500,iprPuffs:4,cont:7.5};
- if(w<=20)return {albMg:3.75,albMl:0.75,mdi:6,iprUnit:500,iprHour:1000,iprPuffs:6,cont:11.25};
- return {albMg:5,albMl:1,mdi:8,iprUnit:500,iprHour:1000,iprPuffs:8,cont:15};
+ if(w<=10)return {albMg:2.5,mdi:4,iprUnit:250,iprHour:500,iprPuffs:4,cont:7.5};
+ if(w<=20)return {albMg:3.75,mdi:6,iprUnit:500,iprHour:1000,iprPuffs:6,cont:11.25};
+ return {albMg:5,mdi:8,iprUnit:500,iprHour:1000,iprPuffs:8,cont:15};
 }
 function dexAsthmaByWeight(w){
  if(w===null||w<5)return null;
@@ -434,9 +514,10 @@ function dexAsthmaByWeight(w){
  if(w<=12)return 6;
  return 8;
 }
+function concMl(dose,conc){let c=+conc;return Number.isFinite(c)&&c>0?dose/c:null}
 function drugsView(){
  header('Fármacos','Respiratorios + corticoides + RSI',true);setNav('home');
- let w=patient.weight===''?null:+patient.weight, age=patient.ageYears===''?null:+patient.ageYears;
+ let w=patient.weight===''?null:+patient.weight;
  let a=asthmaDrugByWeight(w), dex=dexAsthmaByWeight(w);
  let pred=w?Math.min(w*2,60):null;
  let predChile=w?Math.min(w,40):null;
@@ -444,31 +525,50 @@ function drugsView(){
  let croupDexLow=w?w*.15:null;
  let croupDexHigh=w?Math.min(w*.6,12):null;
  let croupPred=w?w:null;
+
+ let salbMl=a?concMl(a.albMg,drugs.salbConc):null;
+ let ipraMl=a?concMl(a.iprUnit,drugs.ipraConc):null;
+ let dexAsthmaMl=dex!==null?concMl(dex,drugs.dexConc):null;
+ let predMl=pred!==null?concMl(pred,drugs.predConc):null;
+ let predChileMl=predChile!==null?concMl(predChile,drugs.predConc):null;
+ let croupDexLowMl=croupDexLow!==null?concMl(croupDexLow,drugs.dexConc):null;
+ let croupDexHighMl=croupDexHigh!==null?concMl(croupDexHigh,drugs.dexConc):null;
+ let croupPredMl=croupPred!==null?concMl(croupPred,drugs.predConc):null;
+
  return `${patientBanner()}
  <div class="warn-strip"><strong>Referencia para profesionales.</strong> PediKine calcula desde el peso, pero debes confirmar diagnóstico, indicación, concentración disponible, vía y protocolo local.</div>
 
  ${w?`<section class="value-card"><div class="label">Paciente para cálculo farmacológico</div><div class="value">${fmt(w)} kg</div><div class="sub">${patientAgeText()}</div></section>`:
  `<div class="info-strip">Ingresa el peso en “Paciente actual” para activar los cálculos automáticos.</div>`}
 
+ <section class="panel"><h3>Concentraciones disponibles</h3>
+  <div class="info-strip">Edita estos valores para que los <strong>mL correspondan a la presentación real de tu servicio</strong>. La dosis en mg/μg no cambia.</div>
+  <div class="field"><label>Salbutamol solución <small>mg/mL</small></label><input id="drugSalbConc" type="number" min="0.01" step="0.01" value="${drugs.salbConc}" placeholder="Ej: 5"></div>
+  <div class="field"><label>Ipratropio solución <small>μg/mL</small></label><input id="drugIpraConc" type="number" min="1" step="1" value="${drugs.ipraConc}" placeholder="Ej: 250"></div>
+  <div class="field"><label>Dexametasona <small>mg/mL · opcional</small></label><input id="drugDexConc" type="number" min="0.01" step="0.01" value="${drugs.dexConc}" placeholder="Ej: 4"></div>
+  <div class="field"><label>Prednisona / prednisolona <small>mg/mL · opcional</small></label><input id="drugPredConc" type="number" min="0.01" step="0.01" value="${drugs.predConc}" placeholder="Ej: según frasco"></div>
+  <div id="drugConcWarn"></div>
+ </section>
+
  <div class="section-head"><h2>Asma aguda — inhaloterapia</h2><span>CHOP 2026 por peso</span></div>
  ${a?`<section class="panel">
   <div class="tool-list">
-   <div class="tool-row"><div class="square">S</div><div><h3>Salbutamol nebulizado</h3><p><strong>${fmt(a.albMg)} mg</strong> = <strong>${fmt(a.albMl)} mL</strong> de solución 0,5% (5 mg/mL). Para volumen total 4 mL: agregar ${fmt(4-a.albMl)} mL de SF.</p></div><div></div></div>
+   <div class="tool-row"><div class="square">S</div><div><h3>Salbutamol nebulizado</h3><p><strong>${fmt(a.albMg)} mg</strong>${salbMl!==null?` = <strong>${fmt(salbMl)} mL</strong> a ${drugs.salbConc} mg/mL`:''}.</p>${salbMl!==null&&salbMl<=4?`<p class="tiny">Si tu protocolo completa a 4 mL: agregar ${fmt(4-salbMl)} mL de SF.</p>`:''}</div><div></div></div>
    <div class="tool-row"><div class="square">MDI</div><div><h3>Salbutamol MDI 100 μg/puff</h3><p><strong>${a.mdi} puff</strong> por dosis en el esquema por peso CHOP.</p></div><div></div></div>
-   <div class="tool-row"><div class="square">I</div><div><h3>Ipratropio nebulizado</h3><p><strong>${a.iprUnit} μg cada 20 min × 2</strong> en el esquema ED CHOP; alternativa UniNeb total 1 h: ${a.iprHour} μg.</p></div><div></div></div>
+   <div class="tool-row"><div class="square">I</div><div><h3>Ipratropio nebulizado</h3><p><strong>${a.iprUnit} μg cada 20 min × 2</strong>${ipraMl!==null?` = <strong>${fmt(ipraMl)} mL por dosis</strong> a ${drugs.ipraConc} μg/mL`:''}. Alternativa UniNeb total 1 h: ${a.iprHour} μg.</p></div><div></div></div>
    <div class="tool-row"><div class="square">I+</div><div><h3>Ipratropio MDI</h3><p><strong>${a.iprPuffs} puff</strong> en el esquema por peso CHOP.</p></div><div></div></div>
    <div class="tool-row"><div class="square">∞</div><div><h3>Salbutamol continuo</h3><p><strong>${fmt(a.cont)} mg/h</strong> para esta banda de peso. Uso en exacerbación severa/refractaria con monitorización.</p></div><div></div></div>
   </div>
-  <div class="info-strip">SOCHINEP-SER Chile utiliza 2,5–5 mg nebulizados en crisis severa escolar, con SF hasta 4 mL. El esquema CHOP por peso queda dentro de ese rango en pacientes ≥5 kg.</div>
+  <div class="info-strip">SOCHINEP-SER Chile utiliza 2,5–5 mg nebulizados en crisis severa escolar, con SF hasta 4 mL.</div>
  </section>`:
  `<div class="warn-strip">Para pesos &lt;5 kg no se automatiza un esquema de “asma” por bandas CHOP; en lactantes pequeños el diagnóstico y la indicación de broncodilatador requieren contexto clínico y protocolo específico.</div>`}
 
  <div class="section-head"><h2>Corticoides — asma</h2><span>peso automático</span></div>
  ${w?`<section class="panel">
   <div class="tool-list">
-   ${dex!==null?`<div class="tool-row"><div class="square">Dx</div><div><h3>Dexametasona — CHOP</h3><p><strong>${fmt(dex)} mg</strong> por dosis según banda de peso. En crisis leve-moderada puede repetirse en 24–48 h según protocolo.</p></div><div></div></div>`:''}
-   <div class="tool-row"><div class="square">Pr</div><div><h3>Prednisona / metilprednisolona — CHOP</h3><p><strong>${fmt(pred)} mg</strong> (2 mg/kg; máximo 60 mg) PO/IV según fármaco y situación clínica.</p></div><div></div></div>
-   <div class="tool-row"><div class="square">CL</div><div><h3>Prednisona — referencia chilena preescolar</h3><p><strong>${fmt(predChile)} mg</strong> (1 mg/kg/día; máximo 40 mg) según consenso chileno.</p></div><div></div></div>
+   ${dex!==null?`<div class="tool-row"><div class="square">Dx</div><div><h3>Dexametasona — CHOP</h3><p><strong>${fmt(dex)} mg</strong>${dexAsthmaMl!==null?` = <strong>${fmt(dexAsthmaMl)} mL</strong> a ${drugs.dexConc} mg/mL`:''} por dosis según banda de peso.</p></div><div></div></div>`:''}
+   <div class="tool-row"><div class="square">Pr</div><div><h3>Prednisona / metilprednisolona — CHOP</h3><p><strong>${fmt(pred)} mg</strong> (2 mg/kg; máximo 60 mg)${predMl!==null?` = <strong>${fmt(predMl)} mL</strong> si la presentación seleccionada corresponde a ${drugs.predConc} mg/mL`:''}.</p></div><div></div></div>
+   <div class="tool-row"><div class="square">CL</div><div><h3>Prednisona — referencia chilena preescolar</h3><p><strong>${fmt(predChile)} mg</strong> (1 mg/kg/día; máximo 40 mg)${predChileMl!==null?` = <strong>${fmt(predChileMl)} mL</strong> a ${drugs.predConc} mg/mL`:''}.</p></div><div></div></div>
    <div class="tool-row"><div class="square">Mg</div><div><h3>Sulfato de magnesio IV</h3><p><strong>${fmt(mg)} mg</strong> (50 mg/kg; máximo 2 g) como terapia de escalamiento en exacerbación severa según protocolo.</p></div><div></div></div>
   </div>
  </section>`:''}
@@ -476,8 +576,8 @@ function drugsView(){
  <div class="section-head"><h2>Crup / vía aérea superior</h2><span>RCH</span></div>
  ${w?`<section class="panel">
   <div class="tool-list">
-   <div class="tool-row"><div class="square">Dx</div><div><h3>Dexametasona</h3><p>Leve-moderado con indicación: <strong>${fmt(croupDexLow)} mg</strong> (0,15 mg/kg). Severo/amenaza vital: <strong>${fmt(croupDexHigh)} mg</strong> (0,6 mg/kg; máx. 12 mg).</p></div><div></div></div>
-   <div class="tool-row"><div class="square">Pr</div><div><h3>Prednisolona oral</h3><p><strong>${fmt(croupPred)} mg</strong> (1 mg/kg) como alternativa en cuadros leves-moderados según protocolo.</p></div><div></div></div>
+   <div class="tool-row"><div class="square">Dx</div><div><h3>Dexametasona</h3><p>Leve-moderado con indicación: <strong>${fmt(croupDexLow)} mg</strong>${croupDexLowMl!==null?` (${fmt(croupDexLowMl)} mL a ${drugs.dexConc} mg/mL)`:''}. Severo/amenaza vital: <strong>${fmt(croupDexHigh)} mg</strong>${croupDexHighMl!==null?` (${fmt(croupDexHighMl)} mL)`:''}.</p></div><div></div></div>
+   <div class="tool-row"><div class="square">Pr</div><div><h3>Prednisolona oral</h3><p><strong>${fmt(croupPred)} mg</strong> (1 mg/kg)${croupPredMl!==null?` = <strong>${fmt(croupPredMl)} mL</strong> a ${drugs.predConc} mg/mL`:''}.</p></div><div></div></div>
    <div class="tool-row"><div class="square">Ad</div><div><h3>Adrenalina nebulizada</h3><p><strong>5 mL de adrenalina 1:1000 sin diluir</strong> en crup grave/amenaza vital. Puede repetirse si es necesario y requiere observación posterior.</p></div><div></div></div>
   </div>
  </section>`:''}
@@ -488,9 +588,28 @@ function drugsView(){
    <div class="tool-row"><div class="square">R</div><div><h3>Rocuronio IV</h3><p>1,2–1,6 mg/kg → <strong>${drugDose(w*1.2)}–${drugDose(w*1.6)} mg</strong>.</p></div><div></div></div>
  </div></section>`:''}
 
- <div class="warn-strip"><strong>Concentraciones importan:</strong> los mL sólo son válidos para la concentración escrita en cada tarjeta. Si la presentación es distinta, usa los mg/μg como referencia y verifica la conversión.</div>`;
+ <div class="warn-strip"><strong>Seguridad:</strong> PediKine siempre conserva la dosis en mg/μg. La conversión a mL sólo aparece cuando la concentración ingresada es válida y debe coincidir con el envase disponible.</div>`;
 }
-function bindDrugs(){}
+function bindDrugs(){
+ let s=document.getElementById('drugSalbConc'),i=document.getElementById('drugIpraConc'),
+     d=document.getElementById('drugDexConc'),p=document.getElementById('drugPredConc');
+ const save=()=>{
+   let vals=[[s,'salbConc'],[i,'ipraConc'],[d,'dexConc'],[p,'predConc']];
+   let bad=[];
+   vals.forEach(([el,key])=>{
+     if(!el)return;
+     if(el.value!==''&&(+el.value<=0||!Number.isFinite(+el.value)))bad.push(key);
+     drugs[key]=el.value;
+   });
+   if(bad.length){
+     let box=document.getElementById('drugConcWarn');
+     if(box)box.innerHTML=`<div class="warn-strip">Revisa las concentraciones: deben ser números mayores que 0.</div>`;
+     return;
+   }
+   render();
+ };
+ [s,i,d,p].forEach(el=>{if(el)el.onchange=save});
+}
 
 
 function vmView(){
@@ -567,27 +686,44 @@ function bindVm(){
 }
 
 
+function normalizeFio2(v){
+ if(v==='')return null;
+ let n=+v;
+ if(!Number.isFinite(n))return null;
+ if(n>=0.21&&n<=1)return n;
+ if(n>=21&&n<=100)return n/100;
+ return null;
+}
 function oxygenationView(){
  header('Oxigenación','PAFI · SAFI · ROX',true);setNav('home');
- let fio2=oxy.fio2===''?null:(+oxy.fio2>1?+oxy.fio2/100:+oxy.fio2);
- let safi=(fio2&&oxy.spo2!=='')?+oxy.spo2/fio2:null;
- let pafi=(fio2&&oxy.pao2!=='')?+oxy.pao2/fio2:null;
- let rox=(fio2&&oxy.spo2!==''&&oxy.rr!=='')?((+oxy.spo2/fio2)/+oxy.rr):null;
+ let fio2=normalizeFio2(oxy.fio2);
+ let spo2ok=oxy.spo2===''?false:validRange(oxy.spo2,50,100);
+ let rrok=oxy.rr===''?false:validRange(oxy.rr,1,150);
+ let paok=oxy.pao2===''?false:validRange(oxy.pao2,1,760);
+ let safi=(fio2&&spo2ok)?+oxy.spo2/fio2:null;
+ let pafi=(fio2&&paok)?+oxy.pao2/fio2:null;
+ let rox=(fio2&&spo2ok&&rrok)?((+oxy.spo2/fio2)/+oxy.rr):null;
+ let errors=[];
+ if(oxy.spo2!==''&&!spo2ok)errors.push('SpO₂ debe estar entre 50 y 100%.');
+ if(oxy.fio2!==''&&fio2===null)errors.push('FiO₂: usa 0,21–1,00 o 21–100%.');
+ if(oxy.rr!==''&&!rrok)errors.push('FR: revisa el valor ingresado.');
+ if(oxy.pao2!==''&&!paok)errors.push('PaO₂: revisa el valor ingresado.');
  return `${patientBanner()}
- <div class="info-strip"><strong>Una sola entrada, tres índices.</strong><br>FiO₂ puede escribirse como 40 (%) o 0,40.</div>
+ <div class="info-strip"><strong>Una sola entrada, tres índices.</strong><br>FiO₂ puede escribirse como 40 (%) o 0,40. Valores entre 1 y 21 no se aceptan para evitar ambigüedad.</div>
  <section class="panel"><h3>Datos</h3>
   <div class="field"><label>SpO₂ <small>%</small></label><input id="oxySpo2" type="number" min="50" max="100" value="${oxy.spo2}" placeholder="Ej: 94"></div>
   <div class="field"><label>FiO₂ <small>% o decimal</small></label><input id="oxyFio2" type="number" min="0.21" max="100" step="0.01" value="${oxy.fio2}" placeholder="Ej: 40"></div>
-  <div class="field"><label>Frecuencia respiratoria <small>resp/min · para ROX</small></label><input id="oxyRR" type="number" min="1" value="${oxy.rr}" placeholder="Ej: 42"></div>
-  <div class="field"><label>PaO₂ <small>mmHg · opcional para PAFI</small></label><input id="oxyPaO2" type="number" min="1" value="${oxy.pao2}" placeholder="Ej: 72"></div>
+  <div class="field"><label>Frecuencia respiratoria <small>resp/min · para ROX</small></label><input id="oxyRR" type="number" min="1" max="150" value="${oxy.rr}" placeholder="Ej: 42"></div>
+  <div class="field"><label>PaO₂ <small>mmHg · opcional para PAFI</small></label><input id="oxyPaO2" type="number" min="1" max="760" value="${oxy.pao2}" placeholder="Ej: 72"></div>
  </section>
+ ${errors.length?`<div class="warn-strip"><strong>Revisar datos</strong><br>${errors.join('<br>')}</div>`:''}
  ${(safi!==null||pafi!==null||rox!==null)?`<section class="panel"><h3>Resultados</h3>
   <div class="cannula-table">
    ${safi!==null?`<div class="cannula-row"><strong>SAFI</strong><span>${fmt(safi)}</span><span>SpO₂/FiO₂</span></div>`:''}
    ${pafi!==null?`<div class="cannula-row"><strong>PAFI</strong><span>${fmt(pafi)}</span><span>PaO₂/FiO₂</span></div>`:''}
    ${rox!==null?`<div class="cannula-row"><strong>ROX</strong><span>${fmt(rox)}</span><span>(S/F)/FR</span></div>`:''}
   </div></section>`:''}
- <div class="warn-strip"><strong>ROX en pediatría:</strong> se muestra sólo el ROX convencional. No se incorporan pROX/ROX-M ni un semáforo automático porque no existe un punto de corte pediátrico universal y la capacidad predictiva publicada es modesta.</div>`;
+ <div class="warn-strip"><strong>ROX en pediatría:</strong> se muestra sólo el ROX convencional. No se incorporan pROX/ROX-M ni un semáforo automático porque no existe un punto de corte pediátrico universal.</div>`;
 }
 function bindOxygenation(){
  let s=document.getElementById('oxySpo2'),f=document.getElementById('oxyFio2'),
@@ -601,7 +737,7 @@ function references(){
  return `<section class="panel"><h3>TAL modificado</h3><ol class="reference-list">
  <li>MINSAL Chile 2024 — Orientación técnica bronquiolitis.</li><li>Luarte-Martínez et al. — validez y confiabilidad del TAL modificado en niños chilenos.</li></ol></section>
  <section class="panel"><h3>Wood-Downes-Ferrés</h3><ol class="reference-list"><li>Anales de Pediatría — tabla WDF usada en protocolo de CNAF.</li></ol></section>
- <section class="panel"><h3>PRAM / asma aguda</h3><ol class="reference-list"><li>GINA 2026 Strategy Report — uso de escalas clínicas validadas; PRAM citado como ejemplo.</li><li>Canadian Paediatric Society — tabla PRAM 0–12 y clasificación.</li><li>Chalut et al. — validación original del PRAM.</li><li>Pergo et al., 2026 — PRAM en niños 2–17 años y predicción de hospitalización.</li></ol></section>
+ <section class="panel"><h3>PRAM / asma aguda</h3><ol class="reference-list"><li>GINA 2026 Strategy Report — uso de escalas clínicas validadas; PRAM citado como ejemplo.</li><li>Canadian Paediatric Society — tabla PRAM 0–12 y clasificación.</li><li>Chalut et al. — validación original del PRAM.</li><li>Pergo et al., 2026 — PRAM en niños 2–17 años y predicción de hospitalización.</li><li>Instrucciones operativas PRAM: el componente SpO₂ se valora en aire ambiente; si existe O₂ suplementario se debe usar un dato basal previo fiable, no la SpO₂ corregida.</li></ol></section>
 <section class="panel"><h3>Pulmonary Score</h3><ol class="reference-list"><li>Consenso REGAP de asma pediátrica — tabla PS y clasificación integrada con SpO₂.</li></ol></section>
  <section class="panel"><h3>CNAF</h3><ol class="reference-list"><li>Pilar Orive FJ, López Fernández YM. Alto flujo. Protocolos AEP/SECIP, 2021.</li><li>Estrategia publicada con corte de 10 kg: 2 L/kg/min hasta 10 kg y +0,5 L/kg/min por kg adicional.</li><li>Royal Children's Hospital Melbourne — alternativa con corte en 12 kg.</li><li>Fisher & Paykel — Optiflow Junior 2 / rangos técnicos de interfaz.</li></ol></section>
  <section class="panel"><h3>Vía aérea / RSI</h3><ol class="reference-list"><li>Royal Children's Hospital — Emergency airway management y Trauma Airway Management.</li><li>RCH Butterfly Ward — tablas neonatales de TOT y hojas Miller.</li></ol></section>
@@ -617,7 +753,7 @@ function references(){
  <li>PALICC-2 — ventilación protectora en PARDS: VT, Pplat, ΔP y titulación de PEEP.</li>
  <li>PEMVECC — consenso europeo de ventilación mecánica pediátrica, incluida estrategia en enfermedad obstructiva/restrictiva.</li>
  </ol></section>
- <div class="warn-strip">Fecha de revisión del contenido de esta versión: agosto de 2026.</div>
+ <div class="warn-strip">Fecha de revisión del contenido de esta versión: agosto de 2026 · v0.12.</div>
  <section class="creator-card">
    <div class="creator-mark">PK</div>
    <div>
