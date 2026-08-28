@@ -8,23 +8,23 @@
   "description": "Herramientas de apoyo respiratorio pediátrico.",
   "icons": [
     {
-      "src": "./pedikine-v012-192.png",
+      "src": "./pedikine-v013-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "./pedikine-v012-512.png",
+      "src": "./pedikine-v013-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "./pedikine-v012-512.png",
+      "src": "./pedikine-v013-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
     }
   ],
-  "id": "./?v=0.12"
+  "id": "./?v=0.13"
 }

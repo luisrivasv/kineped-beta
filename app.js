@@ -126,7 +126,7 @@ document.querySelectorAll('[data-nav]').forEach(b=>b.onclick=()=>setRoute(b.data
 
 function header(title,subtitle='Herramientas respiratorias pediátricas',back=false){pageTitle.textContent=title;pageSubtitle.textContent=subtitle;backBtn.hidden=!back}
 function openGeneralInfo(){openModal('Sobre PediKine',`
-<p><strong>PediKine v0.12</strong> reúne herramientas respiratorias pediátricas de apoyo clínico y consulta rápida.</p>
+<p><strong>PediKine v0.13</strong> reúne herramientas respiratorias pediátricas de apoyo clínico y consulta rápida.</p>
 <div class="warn-strip"><strong>No prescribe tratamiento ni reemplaza juicio clínico.</strong> Verifica diagnóstico, evolución, protocolo local, concentración farmacológica y fuente original.</div>
 <p>Esta versión mejora el ingreso de edad (años + meses), el componente SpO₂ de PRAM con oxigenoterapia, la validación de datos y la conversión farmacológica según concentración disponible.</p>`)}
 function notReady(name){openModal(name,`<p>La fachada ya está preparada para este módulo, pero todavía no lo activamos porque falta validar la lógica clínica y las fuentes.</p>`)}
@@ -717,11 +717,11 @@ function oxygenationView(){
   <div class="field"><label>PaO₂ <small>mmHg · opcional para PAFI</small></label><input id="oxyPaO2" type="number" min="1" max="760" value="${oxy.pao2}" placeholder="Ej: 72"></div>
  </section>
  ${errors.length?`<div class="warn-strip"><strong>Revisar datos</strong><br>${errors.join('<br>')}</div>`:''}
- ${(safi!==null||pafi!==null||rox!==null)?`<section class="panel"><h3>Resultados</h3>
+ ${(safi!==null||pafi!==null||rox!==null)?`<section class="panel oxygen-results"><h3>Resultados</h3>
   <div class="cannula-table">
-   ${safi!==null?`<div class="cannula-row"><strong>SAFI</strong><span>${fmt(safi)}</span><span>SpO₂/FiO₂</span></div>`:''}
-   ${pafi!==null?`<div class="cannula-row"><strong>PAFI</strong><span>${fmt(pafi)}</span><span>PaO₂/FiO₂</span></div>`:''}
-   ${rox!==null?`<div class="cannula-row"><strong>ROX</strong><span>${fmt(rox)}</span><span>(S/F)/FR</span></div>`:''}
+   ${safi!==null?`<div class="cannula-row"><strong>SAFI</strong><span class="oxygen-value">${fmt(safi)}</span><span class="oxygen-formula">SpO₂/FiO₂</span></div>`:''}
+   ${pafi!==null?`<div class="cannula-row"><strong>PAFI</strong><span class="oxygen-value">${fmt(pafi)}</span><span class="oxygen-formula">PaO₂/FiO₂</span></div>`:''}
+   ${rox!==null?`<div class="cannula-row"><strong>ROX</strong><span class="oxygen-value">${fmt(rox)}</span><span class="oxygen-formula">(S/F)/FR</span></div>`:''}
   </div></section>`:''}
  <div class="warn-strip"><strong>ROX en pediatría:</strong> se muestra sólo el ROX convencional. No se incorporan pROX/ROX-M ni un semáforo automático porque no existe un punto de corte pediátrico universal.</div>`;
 }
@@ -753,7 +753,7 @@ function references(){
  <li>PALICC-2 — ventilación protectora en PARDS: VT, Pplat, ΔP y titulación de PEEP.</li>
  <li>PEMVECC — consenso europeo de ventilación mecánica pediátrica, incluida estrategia en enfermedad obstructiva/restrictiva.</li>
  </ol></section>
- <div class="warn-strip">Fecha de revisión del contenido de esta versión: agosto de 2026 · v0.12.</div>
+ <div class="warn-strip">Fecha de revisión del contenido de esta versión: agosto de 2026 · v0.13.</div>
  <section class="creator-card">
    <div class="creator-mark">PK</div>
    <div>

@@ -151,3 +151,24 @@ dialog{width:min(92vw,560px);border:0;padding:0;background:transparent}dialog::b
     text-overflow:ellipsis;
   }
 }
+
+
+/* v0.13 — resultados de oxigenación más visibles */
+.oxygen-results .cannula-row {
+  align-items: center;
+  padding-top: 14px;
+  padding-bottom: 14px;
+}
+.oxygen-results .cannula-row strong {
+  font-size: 1.05rem;
+}
+.oxygen-results .cannula-row .oxygen-value {
+  font-size: 1.55rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+.oxygen-results .cannula-row .oxygen-formula {
+  font-size: 0.78rem;
+  opacity: 0.72;
+}
